@@ -54,12 +54,36 @@ Todos são atribuídos como métodos de instância no Create do `obj_actor`, ent
 |---|---|---|
 | `GRAVITY` | `.1` | aceleração vertical por frame |
 | `JUMP_SPEED` | `3` | impulso do pulo, aplicado como `-JUMP_SPEED` |
+| `JUMP_CUT` | `.5` | fração da subida mantida ao soltar o pulo |
 | `TERMINAL_SPEED` | `3` | teto da queda |
-| `MOVEMENT_SPEED` | `1` | velocidade horizontal |
+| `MOVEMENT_SPEED` | `1` | velocidade horizontal no chão |
+| `AIR_SPEED` | `.5` | velocidade horizontal no ar |
 | `SLOPE_STEP_PENALTY` | `1` | px extras cobrados por degrau vencido |
 | `SLOPE_MAX_PENALTY` | `.99` | teto da penalidade acumulada na rampa |
 
-Com esses valores, o pulo sobe **45px** (`JUMP_SPEED² / (2 * GRAVITY)`), leva 30 frames para chegar ao ápice e fica ~60 frames no ar, cobrindo até 60px na horizontal.
+Com esses valores, o pulo sobe **46px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 45, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 61.
+
+### Pulo e ar
+
+Segurar o botão sobe os 46px. Soltar durante a subida multiplica o que resta por `JUMP_CUT`, então o ápice depende do tempo de aperto:
+
+| Solta no frame | Altura | Tempo de ar |
+|---|---|---|
+| 2 (toque) | 14,2px | 33 |
+| 5 | 20,5px | 38 |
+| 11 | 31,0px | 46 |
+| 16 | 37,7px | 51 |
+| segurando | 46,5px | 61 |
+
+No ar a velocidade horizontal segue três regras:
+
+| Input | Efeito |
+|---|---|
+| mesma direção da velocidade | conserva `max(AIR_SPEED, abs(velocity.x))` — a inércia do pulo corrido se mantém |
+| direção oposta | troca na hora para `AIR_SPEED` |
+| nenhum | `clamp` em `±AIR_SPEED`, derrubando um pulo a 1 px/frame para 0,5 |
+
+No chão a velocidade continua sendo reescrita a cada frame com `MOVEMENT_SPEED`.
 
 ### Degraus
 
@@ -95,8 +119,8 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 
 - **`velocity.y` não é zerado no chão.** Parado sobre um sólido, ele oscila entre `0.1` e `0.9` antes do hook de colisão zerar. Nunca use `velocity.y` como indicador de "está no chão": use `is_grounded()`.
 - **Passo bloqueado não dispara pós-movimento.** Se precisar reagir a uma colisão, o lugar é o `on_*_blocked`.
-- **`velocity.x` é reescrito todo frame pelo Step**, então não existe aceleração ou atrito horizontais — a velocidade muda instantaneamente.
-- **Abaixo de 1 px/frame todo movimento tem frames parados.** É quantização: a 0,5 px/frame a cadência é um passo a cada dois frames. Não tente "suavizar" com posição fracionária; em textura com nearest sampling o sprite treme de largura.
+- **No ar a velocidade horizontal muda por regra, não por inércia livre.** Segurar a direção conserva o que veio do chão; soltar derruba para `AIR_SPEED` e inverter troca na hora para `AIR_SPEED`. Só no chão a velocidade é reescrita a cada frame com `MOVEMENT_SPEED`.
+- **Abaixo de 1 px/frame todo movimento tem frames parados.** É quantização: a 0,5 px/frame a cadência é um passo a cada dois frames — inclusive no ar, onde `AIR_SPEED` vale 0,5. Não tente "suavizar" com posição fracionária; em textura com nearest sampling o sprite treme de largura.
 - **Diagonal anda mais rápido em percurso.** `_dir` pode ser `(1, 1)`, o que desloca 1,41px naquele passo.
 - **O step-up vence apenas 1px.** Degrau de 2px ou mais bloqueia como parede.
 - **A penalidade da rampa precisa do `clamp`.** Sem ele, a penalidade chega a 1px e o `move()` a interpreta como passo válido, empurrando o ator 1px para trás quando a tecla é solta.
