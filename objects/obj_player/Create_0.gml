@@ -1,0 +1,62 @@
+event_inherited();
+
+#region Constantes
+    GRAVITY = .1;
+    JUMP_SPEED = 3;
+    TERMINAL_SPEED = 3;
+    MOVEMENT_SPEED = 1;
+    SLOPE_STEP_PENALTY = 1;
+    SLOPE_MAX_PENALTY = .99;
+#endregion
+
+#region Hooks
+    /// @desc Passo em x bloqueado: tenta subir um degrau antes de parar.
+    /// @param {Id.Instance} _instance Instância que bloqueou o passo.
+    on_x_blocked = function(_instance) {
+        if (try_step_up(sign(velocity.x))) return;
+
+        velocity.x = 0;
+        velocity_remainder.x = 0;
+    }
+
+    /// @desc Passo em x efetivado: tenta colar no chão da rampa.
+    on_x_moved = function() {
+        try_step_down(sign(velocity.x));
+    }
+#endregion
+
+#region Degraus
+    /// @desc Sobe 1px sobre degrau ou rampa, cobrando o custo da subida.
+    /// @param {Real} _dir Direção do passo: -1, 0 ou 1.
+    /// @return {Bool}
+    try_step_up = function(_dir) {
+        if (_dir == 0) return false;
+
+        var _above = instance_place(x + _dir, y - 1, obj_solid);
+
+        if (_above != noone) return false;
+        if (!is_grounded()) return false;
+
+        x += _dir;
+        y--;
+        velocity_remainder.y = 0;
+        velocity_remainder.x -= _dir * SLOPE_STEP_PENALTY;
+        velocity_remainder.x = clamp(velocity_remainder.x, -SLOPE_MAX_PENALTY, SLOPE_MAX_PENALTY);
+
+        return true;
+    }
+
+    /// @desc Desce 1px para acompanhar rampa, sem sair de beiras.
+    /// @param {Real} _dir Direção do passo: -1, 0 ou 1.
+    /// @return {Bool}
+    try_step_down = function(_dir) {
+        if (velocity.y < 0) return false;
+
+        if (instance_place(x, y + 1, obj_solid) != noone) return false;
+        if (instance_place(x, y + 2, obj_solid) == noone) return false;
+        if (instance_place(x - _dir, y + 1, obj_solid) == noone) return false;
+
+        y++;
+        return true;
+    }
+#endregion

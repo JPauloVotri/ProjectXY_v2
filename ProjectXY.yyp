@@ -27,6 +27,7 @@
   },
   "name":"ProjectXY",
   "resources":[
+    {"id":{"name":"obj_actor","path":"objects/obj_actor/obj_actor.yy",},},
     {"id":{"name":"obj_player","path":"objects/obj_player/obj_player.yy",},},
     {"id":{"name":"obj_solid_slope","path":"objects/obj_solid_slope/obj_solid_slope.yy",},},
     {"id":{"name":"obj_solid","path":"objects/obj_solid/obj_solid.yy",},},
