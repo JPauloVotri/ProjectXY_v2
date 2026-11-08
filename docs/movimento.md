@@ -48,14 +48,21 @@ Todos são atribuídos como métodos de instância no Create do `obj_actor`, ent
 4. Desconta o inteiro do `velocity_remainder`.
 5. Enquanto sobrar deslocamento: `_dir` é a direção legalizada em −1, 0 ou 1 por eixo (`normalized().round()`); tenta 1px em x, depois 1px em y, chamando o hook correspondente em cada caso; desconta `_dir` do que falta.
 
+### Física (`scr_physics`)
+
+Duas macros globais, usadas por qualquer objeto que sofra gravidade. Por serem macros, não há ajuste por instância nem em tempo de execução.
+
+| Macro | Valor | Efeito |
+|---|---|---|
+| `GRAVITY` | `.1` | aceleração vertical por frame |
+| `TERMINAL_SPEED` | `3` | teto da queda |
+
 ### Constantes (`obj_player`)
 
 | Constante | Valor | Efeito |
 |---|---|---|
-| `GRAVITY` | `.1` | aceleração vertical por frame |
 | `JUMP_SPEED` | `3` | impulso do pulo, aplicado como `-JUMP_SPEED` |
 | `JUMP_CUT` | `.5` | fração da subida mantida ao soltar o pulo |
-| `TERMINAL_SPEED` | `3` | teto da queda |
 | `MOVEMENT_SPEED` | `1` | velocidade horizontal no chão |
 | `AIR_SPEED` | `.5` | velocidade horizontal no ar |
 | `SLOPE_STEP_PENALTY` | `1` | px extras cobrados por degrau vencido |
@@ -168,16 +175,17 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 
 ## Exemplos
 
-Criar um ator que reaproveita toda a movimentação:
+Criar um ator que herda o movimento e ajusta só o que é dele:
 
 ```gml
 // Create de um novo ator
 event_inherited();
 
-GRAVITY = .2;
-TERMINAL_SPEED = 4;
 MOVEMENT_SPEED = 1.5;
+AIR_SPEED = .8;
 ```
+
+Gravidade e velocidade terminal vêm das macros de `scr_physics` e valem para todo objeto físico — não há o que sobrescrever por ator.
 
 Reagir a um tipo específico de sólido antes de zerar a velocidade:
 
@@ -195,7 +203,7 @@ on_x_blocked = function(_instance) {
 Consultar o chão antes de qualquer decisão vertical:
 
 ```gml
-if (is_grounded() && keyboard_check_pressed(vk_space)) {
+if (is_grounded() && obj_game.jump.check_pressed()) {
     velocity.y = -JUMP_SPEED;
 }
 ```

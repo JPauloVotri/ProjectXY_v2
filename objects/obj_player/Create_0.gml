@@ -7,10 +7,8 @@ enum FACING {
 event_inherited();
 
 #region Constantes
-    GRAVITY = .1;
     JUMP_SPEED = 3;
     JUMP_CUT = .5;
-    TERMINAL_SPEED = 3;
     MOVEMENT_SPEED = 1;
     AIR_SPEED = .5;
     SLOPE_STEP_PENALTY = 1;
