@@ -63,6 +63,27 @@ Todos são atribuídos como métodos de instância no Create do `obj_actor`, ent
 
 Com esses valores, o pulo sobe **46px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 45, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 61.
 
+### Estados (`obj_player`)
+
+O `Step` só coleta o input, aplica gravidade e velocidade terminal, chama `state_machine.update()` e `move()`. A regra horizontal, o impulso do pulo e o corte moram nos estados.
+
+| Estado | Entra quando | Comportamento | Sai para |
+|---|---|---|---|
+| `idle` | `input_x == 0` no chão | regra do chão | `walk`, `fall`, `jump` |
+| `walk` | `input_x != 0` no chão | regra do chão | `idle`, `fall`, `jump` |
+| `jump` | impulso do pulo | controle aéreo + corte | `fall` quando `velocity.y >= 0` |
+| `fall` | no ar, descendo | controle aéreo | `idle`/`walk` ao pousar, `jump` com buffer |
+
+| Auxiliar | Papel |
+|---|---|
+| `apply_ground_movement()` | `velocity.x = input_x * MOVEMENT_SPEED` |
+| `apply_air_control()` | os três casos de `AIR_SPEED` |
+| `try_jump()` | consome o buffer, aplica o impulso e troca para `jump`; devolve se pulou |
+
+Cada `update` segue a ordem **comportamento → chão → pulo → transição**, que reproduz a ordem do `Step` anterior à máquina.
+
+`idle` e `walk` aplicam a mesma regra hoje e existem separados para receber animação. A ramificação de pouso do `fall` aplica a regra do chão e chama `try_jump()` **antes** de trocar para `idle`/`walk`: é isso que faz o pulo sair no próprio frame do pouso, com a velocidade horizontal do chão.
+
 ### Pulo e ar
 
 Segurar o botão sobe os 46px. Soltar durante a subida multiplica o que resta por `JUMP_CUT`, então o ápice depende do tempo de aperto:
