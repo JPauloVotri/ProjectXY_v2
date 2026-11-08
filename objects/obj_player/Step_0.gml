@@ -1,5 +1,5 @@
 var _grounded = is_grounded();
-var _input = keyboard_check(vk_right) - keyboard_check(vk_left);
+var _input = obj_game.right.check() - obj_game.left.check();
 
 if (_grounded) {
     velocity.x = _input * MOVEMENT_SPEED;
@@ -17,9 +17,10 @@ if (velocity.y > TERMINAL_SPEED) {
     velocity.y = TERMINAL_SPEED;
 }
 
-if (_grounded && keyboard_check_pressed(vk_space)) {
+if (obj_game.jump.check_pressed(true) && _grounded) {
+    obj_game.jump.consume_press();
     velocity.y = -JUMP_SPEED;
-} else if (keyboard_check_released(vk_space) && velocity.y < 0) {
+} else if (obj_game.jump.check_released() && velocity.y < 0) {
     velocity.y *= JUMP_CUT;
 }
 
