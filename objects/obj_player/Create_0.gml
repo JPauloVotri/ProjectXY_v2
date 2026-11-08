@@ -1,3 +1,9 @@
+/// @desc Direção olhada, usada para espelhar o sprite e para consultas de lado.
+enum FACING {
+    LEFT = -1,
+    RIGHT = 1,
+}
+
 event_inherited();
 
 #region Constantes
@@ -9,6 +15,20 @@ event_inherited();
     AIR_SPEED = .5;
     SLOPE_STEP_PENALTY = 1;
     SLOPE_MAX_PENALTY = .99;
+#endregion
+
+#region Aparência
+    facing = FACING.RIGHT;
+    image_xscale = facing;
+
+    /// @desc Define a direção olhada e espelha o sprite; ignora 0.
+    /// @param {Enum.FACING} _dir Direção em FACING.
+    set_facing = function(_dir) {
+        if (_dir == 0 || _dir == facing) return;
+
+        facing = _dir;
+        image_xscale = _dir;
+    }
 #endregion
 
 #region Hooks

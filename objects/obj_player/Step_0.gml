@@ -1,6 +1,8 @@
 var _grounded = is_grounded();
 var _input = obj_game.right.check() - obj_game.left.check();
 
+if (_input != 0) set_facing(_input);
+
 if (_grounded) {
     velocity.x = _input * MOVEMENT_SPEED;
 } else if (_input == 0) {

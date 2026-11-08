@@ -85,6 +85,23 @@ No ar a velocidade horizontal segue três regras:
 
 No chão a velocidade continua sendo reescrita a cada frame com `MOVEMENT_SPEED`.
 
+### Facing
+
+`facing` guarda para que lado o jogador olha. Existe só em `obj_player`, e por ser global o enum `FACING` serve a qualquer objeto que precise consultar o lado:
+
+| Valor | Constante | Sprite |
+|---|---|---|
+| `1` | `FACING.RIGHT` | `image_xscale = 1` |
+| `-1` | `FACING.LEFT` | `image_xscale = -1` |
+
+| Método | Efeito |
+|---|---|
+| `set_facing(_dir)` | grava `facing` e aplica em `image_xscale`; ignora `0` |
+
+A direção vem do **input**, não da velocidade: o Step chama `set_facing(_input)` sempre que `_input != 0`. Parado, ou sem direção no ar, o último lado é preservado. Apertar as duas direções ao mesmo tempo dá `_input == 0` e não vira.
+
+`set_facing` é o único ponto que traduz estado em sprite. Quando existirem sprites separadas por lado, só ele muda — `facing` continua o mesmo, e é ele que uma mecânica futura consulta para saber se o jogador está olhando para algo.
+
 ### Degraus
 
 `try_step_up(_dir)` vence 1px de altura:
@@ -126,6 +143,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **A penalidade da rampa precisa do `clamp`.** Sem ele, a penalidade chega a 1px e o `move()` a interpreta como passo válido, empurrando o ator 1px para trás quando a tecla é solta.
 - **A penalidade é por degrau vencido.** Numa rampa mais suave, com menos step-ups por frame, o desconto médio cai proporcionalmente — o fator nominal só vale para 45°.
 - **Hooks são métodos por instância.** Cada ator instancia as próprias funções no Create; para muitos atores com o mesmo comportamento, a alternativa seria um constructor.
+- **A inversão do sprite depende da origem.** `spr_player` usa origem middle-center, então `image_xscale = -1` mantém o bbox em `[-4, 3]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 
 ## Exemplos
 
