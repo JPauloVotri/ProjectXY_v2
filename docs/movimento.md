@@ -96,7 +96,7 @@ Com esses valores, o pulo sobe **46px** — a fórmula contínua `JUMP_SPEED² /
 
 ### Estados (`obj_player`)
 
-O `Step` só coleta o input, aplica gravidade e velocidade terminal, chama `state_machine.update()` e `move()`. A regra horizontal, o impulso do pulo e o corte moram nos estados.
+O `Step` coleta o input, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera a velocidade vertical positiva quando o player está no chão e chama `move()`. A regra horizontal, o impulso do pulo e o corte moram nos estados.
 
 | Estado | Entra quando | Comportamento | Sai para |
 |---|---|---|---|
@@ -186,7 +186,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 
 ## Armadilhas
 
-- **`velocity.y` não é zerado no chão.** Parado sobre um sólido, ele oscila entre `0.1` e `0.9` antes do hook de colisão zerar. Nunca use `velocity.y` como indicador de "está no chão": use `is_grounded()`.
+- **`velocity.y` é zero no chão, mas isso não significa "está no chão".** O `Step` zera a velocidade vertical positiva enquanto `is_grounded()` for verdadeiro, então parado ela vale `0` — mas no ápice do pulo também vale `0`. Para saber se está no chão, use `is_grounded()`.
 - **Passo bloqueado não dispara pós-movimento.** Se precisar reagir a uma colisão, o lugar é o `on_*_blocked`.
 - **No ar a velocidade horizontal muda por regra, não por inércia livre.** Segurar a direção conserva o que veio do chão; soltar derruba para `AIR_SPEED` e inverter troca na hora para `AIR_SPEED`. Só no chão a velocidade é reescrita a cada frame com `MOVEMENT_SPEED`.
 - **Abaixo de 1 px/frame todo movimento tem frames parados.** É quantização: a 0,5 px/frame a cadência é um passo a cada dois frames — inclusive no ar, onde `AIR_SPEED` vale 0,5. Não tente "suavizar" com posição fracionária; em textura com nearest sampling o sprite treme de largura.

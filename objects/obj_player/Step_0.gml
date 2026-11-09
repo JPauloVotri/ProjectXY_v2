@@ -20,4 +20,9 @@ if (velocity.y > _terminal_speed) {
 }
 
 state_machine.update();
+
+if (is_grounded() && velocity.y > 0) {
+    velocity.y = 0;
+}
+
 move();
