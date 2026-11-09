@@ -31,26 +31,31 @@ event_inherited();
 
 #region Estados
     input_x = 0;
+    in_water = false;
+    ignores_friction = false;
+    physics_factor = 1;
     state_machine = new StateMachine();
 
     /// @desc Aplica a regra horizontal do chão.
     apply_ground_movement = function() {
-        velocity.x = input_x * MOVEMENT_SPEED;
+        velocity.x = input_x * MOVEMENT_SPEED * physics_factor;
     }
 
     /// @desc Aplica a regra horizontal do ar, preservando a inércia na mesma direção.
     apply_air_control = function() {
+        var _air_speed = AIR_SPEED * physics_factor;
+
         if (input_x == 0) {
-            velocity.x = clamp(velocity.x, -AIR_SPEED, AIR_SPEED);
+            velocity.x = clamp(velocity.x, -_air_speed, _air_speed);
             return;
         }
 
         if (input_x == sign(velocity.x)) {
-            velocity.x = input_x * max(AIR_SPEED, abs(velocity.x));
+            velocity.x = input_x * max(_air_speed, abs(velocity.x));
             return;
         }
 
-        velocity.x = input_x * AIR_SPEED;
+        velocity.x = input_x * _air_speed;
     }
 
     /// @desc Consome o buffer e aplica o impulso do pulo, se houver aperto.
@@ -59,7 +64,7 @@ event_inherited();
         if (!obj_game.jump.check_pressed(true)) return false;
 
         obj_game.jump.consume_press();
-        velocity.y = -JUMP_SPEED;
+        velocity.y = -JUMP_SPEED * physics_factor;
         state_machine.change_state("jump");
 
         return true;

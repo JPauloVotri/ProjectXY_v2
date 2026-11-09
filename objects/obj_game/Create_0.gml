@@ -17,4 +17,8 @@
     jump = inputs.create_input()
         .add_keyboard_key(vk_space)
         .add_gamepad_button(gp_face1);
+
+    // TODO: remover depois — entrada de teste do power-up de nado.
+    debug_swim = inputs.create_input()
+        .add_keyboard_key(ord("T"));
 #endregion

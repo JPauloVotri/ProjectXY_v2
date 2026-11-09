@@ -50,12 +50,36 @@ Todos são atribuídos como métodos de instância no Create do `obj_actor`, ent
 
 ### Física (`scr_physics`)
 
-Duas macros globais, usadas por qualquer objeto que sofra gravidade. Por serem macros, não há ajuste por instância nem em tempo de execução.
+Três macros globais. Por serem macros, não há ajuste por instância nem em tempo de execução.
 
 | Macro | Valor | Efeito |
 |---|---|---|
 | `GRAVITY` | `.1` | aceleração vertical por frame |
 | `TERMINAL_SPEED` | `3` | teto da queda |
+| `WATER_FACTOR` | `.5` | escala da física dentro da água |
+
+### Água
+
+A água não troca regra nenhuma: ela **escala as magnitudes** por `WATER_FACTOR`. A detecção é sobreposição de bbox, feita no `Step`:
+
+```gml
+in_water = place_meeting(x, y, obj_water);
+physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
+```
+
+| Grandeza | Fora | Na água |
+|---|---|---|
+| Gravidade | `.1` | `.05` |
+| Queda máxima | `3` | `1.5` |
+| Velocidade no chão | `1` | `.5` |
+| Velocidade no ar | `.5` | `.25` |
+| Impulso do pulo | `3` | `1.5` |
+
+Como a regra horizontal é a mesma nos dois meios, a inércia continua valendo dentro da água: entrar correndo conserva a velocidade enquanto a direção é mantida, e decai para o teto ao soltar ou inverter.
+
+**Power-up.** `ignores_friction` desliga o efeito por inteiro: com ele ligado, `physics_factor` vale `1` e a água deixa de existir para a física. O nome é do efeito, não do terreno — a mesma flag vai servir para outros líquidos e para o deslize no gelo, com a condição do meio mudando e a flag não.
+
+Para testar existe um toggle temporário na tecla **T**, marcado no código com `// TODO: remover depois`.
 
 ### Constantes (`obj_player`)
 
@@ -172,6 +196,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **A penalidade é por degrau vencido.** Numa rampa mais suave, com menos step-ups por frame, o desconto médio cai proporcionalmente — o fator nominal só vale para 45°.
 - **Hooks são métodos por instância.** Cada ator instancia as próprias funções no Create; para muitos atores com o mesmo comportamento, a alternativa seria um constructor.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem middle-center, então `image_xscale = -1` mantém o bbox em `[-4, 3]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
+- **O espaçamento da escada é o que exige o power-up.** Quatro degraus de 40px, contra 23px de pulo na água e 46px fora dela. É o que impede a saída do poço sem `ignores_friction` — e o que a libera com ele. Mexer em `JUMP_SPEED`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
 
 ## Exemplos
 
