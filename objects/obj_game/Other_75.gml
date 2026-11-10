@@ -4,12 +4,12 @@ var _pad = async_load[? "pad_index"];
 if (_event == "gamepad discovered") {
     show_debug_message("[input] descoberto no slot " + string(_pad));
 
-    if (inputs.gamepad < 0) inputs.gamepad = _pad;
+    if (input_manager.gamepad < 0) input_manager.gamepad = _pad;
 } else if (_event == "gamepad lost") {
     show_debug_message("[input] perdido do slot " + string(_pad));
 
-    if (inputs.gamepad == _pad) {
-        inputs.gamepad = -1;
-        inputs.refresh_gamepad();
+    if (input_manager.gamepad == _pad) {
+        input_manager.gamepad = -1;
+        input_manager.refresh_gamepad();
     }
 }

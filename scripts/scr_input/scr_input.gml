@@ -62,14 +62,13 @@ function Input(_manager) constructor {
         /// @param {Real} _button Botão a verificar.
         /// @return {Struct.Input} Esta instância.
         add_gamepad_button = function(_button) {
-            var _owner = self;
             var _key_struct = {
-                creator: _owner,
+                manager: __manager,
                 button: _button,
                 check: function() {
-                    if (creator.__manager.gamepad < 0) return false;
+                    if (manager.gamepad < 0) return false;
 
-                    return gamepad_button_check(creator.__manager.gamepad, button);
+                    return gamepad_button_check(manager.gamepad, button);
                 }
             };
 
@@ -81,18 +80,17 @@ function Input(_manager) constructor {
         /// @param {Enum.INPUT_AXIS} _direction Direção em INPUT_AXIS.
         /// @return {Struct.Input} Esta instância.
         add_gamepad_left_stick = function(_direction) {
-            var _owner = self;
             var _key_struct = {
-                creator: _owner,
+                manager: __manager,
                 axis: _direction == INPUT_AXIS.RIGHT || _direction == INPUT_AXIS.LEFT
                     ? gp_axislh
                     : gp_axislv,
                 dir: _direction == INPUT_AXIS.RIGHT || _direction == INPUT_AXIS.DOWN ? 1 : -1,
                 check: function() {
-                    if (creator.__manager.gamepad < 0) return false;
+                    if (manager.gamepad < 0) return false;
 
-                    return gamepad_axis_value(creator.__manager.gamepad, axis) * dir
-                        >= creator.__manager.deadzone;
+                    return gamepad_axis_value(manager.gamepad, axis) * dir
+                        >= manager.deadzone;
                 }
             };
 
@@ -104,18 +102,17 @@ function Input(_manager) constructor {
         /// @param {Enum.INPUT_AXIS} _direction Direção em INPUT_AXIS.
         /// @return {Struct.Input} Esta instância.
         add_gamepad_right_stick = function(_direction) {
-            var _owner = self;
             var _key_struct = {
-                creator: _owner,
+                manager: __manager,
                 axis: _direction == INPUT_AXIS.RIGHT || _direction == INPUT_AXIS.LEFT
                     ? gp_axisrh
                     : gp_axisrv,
                 dir: _direction == INPUT_AXIS.RIGHT || _direction == INPUT_AXIS.DOWN ? 1 : -1,
                 check: function() {
-                    if (creator.__manager.gamepad < 0) return false;
+                    if (manager.gamepad < 0) return false;
 
-                    return gamepad_axis_value(creator.__manager.gamepad, axis) * dir
-                        >= creator.__manager.deadzone;
+                    return gamepad_axis_value(manager.gamepad, axis) * dir
+                        >= manager.deadzone;
                 }
             };
 

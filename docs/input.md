@@ -10,6 +10,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 - **Estado em um único inteiro.** `__time` positivo é frames pressionado, negativo é janela de liberação, zero é ociosa. Não há flags separadas.
 - **`buffer` e `deadzone` são do gerenciador, não da entrada.** Ajustar a tolerância é uma linha em um lugar só.
 - **O slot do controle é descoberto, nunca fixo.** O runner no Linux enumera cada dispositivo evdev como se fosse gamepad, então o índice varia por máquina.
+- **`__` só é lido pelo próprio struct.** Quando um closure precisa da configuração, ela entra como campo público da fonte (`manager`): o `Input` lê o próprio privado uma vez e o resto conversa pelo público.
 - **Nomes em snake_case.** `camelCase` fica reservado para tipos genéricos como `Vector2`.
 
 ## Referência
@@ -18,7 +19,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 
 | Objeto | Papel |
 |---|---|
-| `obj_game` | dono do gerenciador: registra os inputs, avança o estado e acompanha o controle |
+| `obj_game` | dono do gerenciador (`input_manager`): registra os inputs, avança o estado e acompanha o controle |
 
 `obj_game` é persistente e existe uma única vez, no `rm_room_1`. Salas futuras não devem colocá-lo de novo. O player lê `obj_game.left`, `obj_game.right` e `obj_game.jump` em tempo de execução — não cacheia no Create, porque a ordem de criação das instâncias não é garantida.
 
@@ -104,7 +105,7 @@ O sistema parte do recurso de input do gm48.net (Mimpy, 2021). As diferenças ab
 | Reaperto dentro da janela volta a `1` | No original o reaperto era engolido pelos frames restantes da liberação |
 | Janela usa `-(buffer + 1)` | Com `-buffer`, `buffer = 0` deixava `check_released` verdadeiro para sempre |
 | `check_stutter` retorna `false` para `_interval <= 0` | Evita divisão por zero e repetição a cada frame |
-| Fontes de controle capturam `_owner = self` | Sem isso, `self` dentro do closure do struct aponta para o struct |
+| Fontes de controle guardam `manager` | `self` dentro do closure do struct aponta para o próprio struct, então o gerenciador vai como campo da fonte |
 | `consume_press` usa `max(buffer + 1, 2)` | Com `buffer = 1` o valor cairia na própria janela e o aperto repetiria |
 
 ## Armadilhas
@@ -121,7 +122,7 @@ O sistema parte do recurso de input do gm48.net (Mimpy, 2021). As diferenças ab
 Registrar uma entrada com várias fontes:
 
 ```gml
-jump = inputs.create_input()
+jump = input_manager.create_input()
     .add_keyboard_key(vk_space)
     .add_keyboard_key(ord("Z"))
     .add_gamepad_button(gp_face1);
@@ -139,7 +140,7 @@ if (obj_game.jump.check_pressed(true) && is_grounded()) {
 Navegação de menu com repetição:
 
 ```gml
-up = inputs.create_input()
+up = input_manager.create_input()
     .add_keyboard_key(vk_up)
     .add_gamepad_button(gp_padu);
 
@@ -153,7 +154,7 @@ Uma segunda entrada que compartilha o mesmo gerenciador:
 
 ```gml
 // as duas leem o mesmo gamepad, a mesma deadzone e o mesmo buffer
-dash = inputs.create_input()
+dash = input_manager.create_input()
     .add_keyboard_key(ord("X"))
     .add_gamepad_button(gp_face3);
 

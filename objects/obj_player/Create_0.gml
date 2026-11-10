@@ -10,7 +10,7 @@ event_inherited();
     JUMP_SPEED = 3;
     JUMP_CUT = .5;
     MOVEMENT_SPEED = 1;
-    AIR_SPEED = .5;
+    AIR_FACTOR = .5;
     SLOPE_STEP_PENALTY = 1;
     SLOPE_MAX_PENALTY = .99;
 #endregion
@@ -42,8 +42,8 @@ event_inherited();
     }
 
     /// @desc Aplica a regra horizontal do ar, preservando a inércia na mesma direção.
-    apply_air_control = function() {
-        var _air_speed = AIR_SPEED * physics_factor;
+    apply_air_movement = function() {
+        var _air_speed = MOVEMENT_SPEED * AIR_FACTOR * physics_factor;
 
         if (input_x == 0) {
             velocity.x = clamp(velocity.x, -_air_speed, _air_speed);
@@ -100,7 +100,7 @@ event_inherited();
 
     /// @desc Subida: controle aéreo e corte ao soltar.
     on_jump_update = function() {
-        apply_air_control();
+        apply_air_movement();
 
         if (obj_game.jump.check_released() && velocity.y < 0) {
             velocity.y *= JUMP_CUT;
@@ -120,7 +120,7 @@ event_inherited();
             return;
         }
 
-        apply_air_control();
+        apply_air_movement();
     }
 
     state_machine

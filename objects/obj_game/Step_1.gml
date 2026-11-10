@@ -1,1 +1,1 @@
-inputs.run();
+input_manager.run();

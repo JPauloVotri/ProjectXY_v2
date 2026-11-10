@@ -87,8 +87,8 @@ Para testar existe um toggle temporário na tecla **T**, marcado no código com 
 |---|---|---|
 | `JUMP_SPEED` | `3` | impulso do pulo, aplicado como `-JUMP_SPEED` |
 | `JUMP_CUT` | `.5` | fração da subida mantida ao soltar o pulo |
-| `MOVEMENT_SPEED` | `1` | velocidade horizontal no chão |
-| `AIR_SPEED` | `.5` | velocidade horizontal no ar |
+| `MOVEMENT_SPEED` | `1` | velocidade horizontal base; no chão vale inteira |
+| `AIR_FACTOR` | `.5` | fração da `MOVEMENT_SPEED` aplicada no ar |
 | `SLOPE_STEP_PENALTY` | `1` | px extras cobrados por degrau vencido |
 | `SLOPE_MAX_PENALTY` | `.99` | teto da penalidade acumulada na rampa |
 
@@ -107,8 +107,8 @@ O `Step` coleta o input, aplica gravidade e velocidade terminal, chama `state_ma
 
 | Auxiliar | Papel |
 |---|---|
-| `apply_ground_movement()` | `velocity.x = input_x * MOVEMENT_SPEED` |
-| `apply_air_control()` | os três casos de `AIR_SPEED` |
+| `apply_ground_movement()` | `velocity.x = input_x * MOVEMENT_SPEED * physics_factor` |
+| `apply_air_movement()` | os três casos de `MOVEMENT_SPEED * AIR_FACTOR * physics_factor` |
 | `try_jump()` | consome o buffer, aplica o impulso e troca para `jump`; devolve se pulou |
 
 Cada `update` segue a ordem **comportamento → chão → pulo → transição**, que reproduz a ordem do `Step` anterior à máquina.
@@ -127,13 +127,15 @@ Segurar o botão sobe os 46px. Soltar durante a subida multiplica o que resta po
 | 16 | 37,7px | 51 |
 | segurando | 46,5px | 61 |
 
-No ar a velocidade horizontal segue três regras:
+No ar a velocidade horizontal segue três regras. O alvo delas é
+`_air_speed = MOVEMENT_SPEED * AIR_FACTOR * physics_factor`, que com os valores atuais vale **0,5**
+(**0,25** na água):
 
 | Input | Efeito |
 |---|---|
-| mesma direção da velocidade | conserva `max(AIR_SPEED, abs(velocity.x))` — a inércia do pulo corrido se mantém |
-| direção oposta | troca na hora para `AIR_SPEED` |
-| nenhum | `clamp` em `±AIR_SPEED`, derrubando um pulo a 1 px/frame para 0,5 |
+| mesma direção da velocidade | conserva `max(_air_speed, abs(velocity.x))` — a inércia do pulo corrido se mantém |
+| direção oposta | troca na hora para `_air_speed` |
+| nenhum | `clamp` em `±_air_speed`, derrubando um pulo a 1 px/frame para 0,5 |
 
 No chão a velocidade continua sendo reescrita a cada frame com `MOVEMENT_SPEED`.
 
@@ -188,8 +190,8 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 
 - **`velocity.y` é zero no chão, mas isso não significa "está no chão".** O `Step` zera a velocidade vertical positiva enquanto `is_grounded()` for verdadeiro, então parado ela vale `0` — mas no ápice do pulo também vale `0`. Para saber se está no chão, use `is_grounded()`.
 - **Passo bloqueado não dispara pós-movimento.** Se precisar reagir a uma colisão, o lugar é o `on_*_blocked`.
-- **No ar a velocidade horizontal muda por regra, não por inércia livre.** Segurar a direção conserva o que veio do chão; soltar derruba para `AIR_SPEED` e inverter troca na hora para `AIR_SPEED`. Só no chão a velocidade é reescrita a cada frame com `MOVEMENT_SPEED`.
-- **Abaixo de 1 px/frame todo movimento tem frames parados.** É quantização: a 0,5 px/frame a cadência é um passo a cada dois frames — inclusive no ar, onde `AIR_SPEED` vale 0,5. Não tente "suavizar" com posição fracionária; em textura com nearest sampling o sprite treme de largura.
+- **No ar a velocidade horizontal muda por regra, não por inércia livre.** Segurar a direção conserva o que veio do chão; soltar derruba para `_air_speed` e inverter troca na hora para `_air_speed`. Só no chão a velocidade é reescrita a cada frame com `MOVEMENT_SPEED`.
+- **Abaixo de 1 px/frame todo movimento tem frames parados.** É quantização: a 0,5 px/frame a cadência é um passo a cada dois frames — inclusive no ar, onde `MOVEMENT_SPEED * AIR_FACTOR` vale 0,5. Não tente "suavizar" com posição fracionária; em textura com nearest sampling o sprite treme de largura.
 - **Diagonal anda mais rápido em percurso.** `_dir` pode ser `(1, 1)`, o que desloca 1,41px naquele passo.
 - **O step-up vence apenas 1px.** Degrau de 2px ou mais bloqueia como parede.
 - **A penalidade da rampa precisa do `clamp`.** Sem ele, a penalidade chega a 1px e o `move()` a interpreta como passo válido, empurrando o ator 1px para trás quando a tecla é solta.
@@ -207,8 +209,10 @@ Criar um ator que herda o movimento e ajusta só o que é dele:
 event_inherited();
 
 MOVEMENT_SPEED = 1.5;
-AIR_SPEED = .8;
+AIR_FACTOR = .8;
 ```
+
+Com esses valores o chão anda a 1,5 px/frame e o ar a 1,2 — mexer em `MOVEMENT_SPEED` move os dois juntos.
 
 Gravidade e velocidade terminal vêm das macros de `scr_physics` e valem para todo objeto físico — não há o que sobrescrever por ator.
 
