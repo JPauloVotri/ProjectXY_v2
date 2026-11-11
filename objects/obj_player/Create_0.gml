@@ -29,10 +29,18 @@ event_inherited();
     }
 #endregion
 
+#region Power-ups
+    ignores_friction = false;
+
+    /// @desc Liga o efeito que anula a fricção de meios como a água.
+    grant_frictionless = function() {
+        ignores_friction = true;
+    }
+#endregion
+
 #region Estados
     input_x = 0;
     in_water = false;
-    ignores_friction = false;
     physics_factor = 1;
     state_machine = new StateMachine();
 

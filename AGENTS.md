@@ -29,6 +29,8 @@ rg -n "TODO: remover depois" --glob '*.gml'  # leftover test code
 - 4 spaces, never tabs; 100 columns; no trailing whitespace; LF endings, enforced by
   `.gitattributes`. No formatter is configured.
 - `snake_case` throughout; `UPPER_CASE` only for macros (`GRAVITY`, `WATER_FACTOR`).
+- Two-word compounds keep the underscore (`scr_state_machine`, `obj_solid_slope`); closed
+  English compounds stay closed (`pickup`).
 - `_` prefixes locals and parameters; `__` marks private members, read only by the owning struct.
 - `#region` inside Create events that mix concerns; `self.` only in `return self;`.
 - Document with `///` and singular `@desc`/`@param`/`@return`. Temporary test code uses

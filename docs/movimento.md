@@ -20,6 +20,9 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 | `obj_actor` | base sem sprite: guarda estado, `move()` e os hooks padrão |
 | `obj_player` | herda de `obj_actor`; define as constantes e sobrescreve os hooks de x |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
+| `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
+| `obj_power_up` | marcador sem sprite: todo tipo de power-up herda dele |
+| `obj_power_up_frictionless` | herda do marcador; anula a fricção pelo método do jogador |
 
 ### Estado
 
@@ -77,9 +80,36 @@ physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
 
 Como a regra horizontal é a mesma nos dois meios, a inércia continua valendo dentro da água: entrar correndo conserva a velocidade enquanto a direção é mantida, e decai para o teto ao soltar ou inverter.
 
-**Power-up.** `ignores_friction` desliga o efeito por inteiro: com ele ligado, `physics_factor` vale `1` e a água deixa de existir para a física. O nome é do efeito, não do terreno — a mesma flag vai servir para outros líquidos e para o deslize no gelo, com a condição do meio mudando e a flag não.
+**Power-up.** `ignores_friction` desliga o efeito por inteiro: com ele ligado, `physics_factor` vale `1` e a água deixa de existir para a física. O nome é do efeito, não do terreno — a mesma flag vai servir para outros líquidos e para o deslize no gelo, com a condição do meio mudando e a flag não. Quem liga a flag é `grant_frictionless()`, chamado pelo pickup; o contrato está em Pickups.
 
 Para testar existe um toggle temporário na tecla **T**, marcado no código com `// TODO: remover depois`.
+
+### Pickups
+
+A base `obj_pickup` não tem sprite e não é posicionada: o `Step` dela detecta a sobreposição com o player, chama `on_collect` e só destrói o item quando a resposta é `true`.
+
+Entre a base e os tipos fica `obj_power_up`, um marcador sem sprite e sem estado que representa a categoria. Ele existe para que `instance_place`, `place_meeting` e `object_is_ancestor` perguntem "isto é um power-up?" sem listar tipos. O `Create` dele é uma linha de `event_inherited()` porque `event_inherited()` chama só o pai imediato: sem esse repasse, o `Create` da base não chegaria aos netos.
+
+Cada tipo é um neto com sprite própria e um `Create` que sobrescreve o contrato:
+
+```gml
+event_inherited();
+
+on_collect = function(_player) {
+    _player.grant_frictionless();
+
+    return true;
+}
+```
+
+| Peça | Papel |
+|---|---|
+| `on_collect(_player)` | contrato do tipo: `true` consome o item, `false` o deixa no chão |
+| `grant_frictionless()` | método do player que liga `ignores_friction` |
+
+Cada efeito novo ganha um `grant_*` próprio no player, em vez de o pickup escrever a flag direto: um nome errado estoura na hora, em vez de criar uma variável nova em silêncio.
+
+A base declara `on_collect` com `return false`, então um tipo que esqueça a sobrescrita não é consumido e continua visível no chão.
 
 ### Constantes (`obj_player`)
 
@@ -199,6 +229,8 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **Hooks são métodos por instância.** Cada ator instancia as próprias funções no Create; para muitos atores com o mesmo comportamento, a alternativa seria um constructor.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem middle-center, então `image_xscale = -1` mantém o bbox em `[-4, 3]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 - **O espaçamento da escada é o que exige o power-up.** Quatro degraus de 40px, contra 23px de pulo na água e 46px fora dela. É o que impede a saída do poço sem `ignores_friction` — e o que a libera com ele. Mexer em `JUMP_SPEED`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
+- **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 8 px.
+- **Nenhuma base se posiciona.** `obj_pickup` e `obj_power_up` não têm sprite: a instância da room é sempre um tipo com sprite própria, e uma instância da base estoura na checagem de colisão do `Step`.
 
 ## Exemplos
 

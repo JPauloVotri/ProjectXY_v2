@@ -5,7 +5,7 @@ if (input_x != 0) set_facing(input_x);
 // TODO: remover depois — junto com a entrada `debug_swim` do obj_game.
 if (obj_game.debug_swim.check_pressed()) {
     ignores_friction = !ignores_friction;
-    show_debug_message("[powerup] sem fricção " + (ignores_friction ? "ligado" : "desligado"));
+    show_debug_message("[power_up] sem fricção " + (ignores_friction ? "ligado" : "desligado"));
 }
 
 in_water = place_meeting(x, y, obj_water);
