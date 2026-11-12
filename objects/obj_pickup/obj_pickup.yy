@@ -9,8 +9,8 @@
   "name":"obj_pickup",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Pickups",
+    "path":"folders/Objects/Pickups.yy",
   },
   "parentObjectId":null,
   "persistent":false,

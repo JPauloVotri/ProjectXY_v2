@@ -8,8 +8,8 @@
   "name":"obj_power_up_frictionless",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Pickups",
+    "path":"folders/Objects/Pickups.yy",
   },
   "parentObjectId":{
     "name":"obj_power_up",

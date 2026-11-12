@@ -12,6 +12,8 @@ opens `ProjectXY.yyp`.
 - `sprites/`, `rooms/`, `options/`, `datafiles/` — art, rooms, settings.
 - `docs/` — per-subsystem reference (`vector2.md`, `movimento.md`, `input.md`, `estado.md`,
   `camera.md`). Read the matching document before changing that subsystem.
+- IDE folders: `Objects/{Actors,World,Pickups,Systems}`, `Scripts/{Core,Input,State}`,
+  `Sprites/{Actors,World,Pickups}`. Folders are virtual; disk paths never move with them.
 
 ## Build, Test, and Development Commands
 

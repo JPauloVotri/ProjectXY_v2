@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"scr_state_machine",
   "parent":{
-    "name":"Scripts",
-    "path":"folders/Scripts.yy",
+    "name":"State",
+    "path":"folders/Scripts/State.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
