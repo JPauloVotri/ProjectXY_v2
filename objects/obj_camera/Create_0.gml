@@ -20,7 +20,7 @@
 
     zone_slide_rate = 2;
     slide_near = 16;
-    view_precision = .1;
+    view_precision = .01;
 
     desired_last_x = undefined;
     desired_last_y = undefined;
@@ -73,7 +73,7 @@
         return __ease_step(_delta, abs(_step), min(slide_near, _limit * .5));
     }
 
-    /// @desc Passo de um eixo: correção da zona ou acompanhamento do alvo.
+    /// @desc Passo de um eixo: correção da zona ou acompanhamento do alvo, assentando no limite.
     /// @param {Real} _pos Posição atual da view no eixo.
     /// @param {Real} _target Alvo já corrigido pela zona.
     /// @param {Real} _desired Desejado, sem as zonas.
@@ -81,7 +81,10 @@
     /// @return {Real} Deslocamento do eixo neste frame.
     __axis_step = function(_pos, _target, _desired, _last) {
         if (_target != _desired) {
-            return __ease_step(_target - _pos, zone_slide_rate, slide_near);
+            var _delta = _target - _pos;
+            var _step = __ease_step(_delta, zone_slide_rate, slide_near);
+
+            return abs(_step) < view_precision ? _delta : _step;
         }
 
         var _follow = _desired - _last;

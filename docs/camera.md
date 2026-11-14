@@ -81,7 +81,7 @@ Com o alvo **dentro** da zona, ou fora dela nos dois eixos, nenhum limite é apl
 quando o alvo encosta nela pelo bbox (`place_meeting` no Step), e a revelação é permanente.
 
 O eixo travado anda a `zone_slide_rate` por frame, com a mesma desaceleração de `slide_near` ao
-chegar no limite.
+chegar no limite, e assenta exatamente nele.
 
 ## Referência
 
@@ -93,7 +93,7 @@ chegar no limite.
 | `look_ahead_rate` | quanto o offset pode mudar por frame: 0,5 |
 | `zone_slide_rate` | quanto o eixo travado anda por frame: 2 |
 | `slide_near` | distância em que o passo desacelera até o alvo: 16 |
-| `view_precision` | precisão da posição da view: 0,1 px |
+| `view_precision` | precisão da posição da view: 0,01 px |
 | `game_width` / `game_height` | área útil (320×180), lida da view no Create |
 | `view_surf` | surface do render; criada sob demanda e liberada no Clean Up |
 
@@ -119,6 +119,10 @@ chegar no limite.
 - **A revelação da zona secreta é permanente.** Não há como re-bloquear uma zona já revelada.
 - **A posição é arredondada a cada frame.** É o que assenta a view perto do alvo, em vez de
   deixá-la rastejando por frações de pixel.
+- **O passo do eixo travado pode cair dentro de uma célula da precisão.** Perto do limite,
+  `__ease_step` encolhe o passo até ele não cruzar mais o arredondamento de `view_precision`, e a
+  view estaciona antes do limite — com o recorte mostrando a coluna proibida na borda. Por isso
+  `__axis_step` entrega o resto quando o passo fica menor que a precisão.
 - **A aplicação surface está desligada.** `application_surface_enable(false)` vale para o jogo
   inteiro: qualquer efeito futuro que dependa dela (pós-processamento, cópia de surface) precisa
   de outro caminho.
