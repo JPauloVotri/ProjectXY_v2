@@ -24,11 +24,13 @@ então ele vem pronto de quem compilou.
 
 | Ação | Teclado | Controle |
 |---|---|---|
-| Andar para a esquerda | `←` ou `A` | D-pad esquerdo, analógico esquerdo |
-| Andar para a direita | `→` ou `D` | D-pad direito, analógico esquerdo |
-| Pular | `Espaço` | Botão de face de baixo |
+| Andar para a esquerda | `←` ou `A` | D-pad esquerdo ou analógico esquerdo |
+| Andar para a direita | `→` ou `D` | D-pad direito ou analógico esquerdo |
+| Pular | `Espaço` | `A` no Xbox, `✕` no PlayStation |
 | Reiniciar | `F5` | — |
 
+- `A` e `✕` são o mesmo botão físico, o de face de baixo: o Xbox chama de `A` e o PlayStation
+  de `✕` (Xis).
 - O pulo tem altura variável: soltar o botão durante a subida corta o resto.
 - O controle é detectado sozinho. No Linux ele pode ser enumerado num slot alto; se nada
   responder, conecte o controle antes de abrir o jogo e procure a mensagem
