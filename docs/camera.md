@@ -61,7 +61,9 @@ O offset é a **integral da velocidade**, limitada por frame:
   naquele eixo.
 - **O erro pendente só é fechado a favor do movimento do alvo.** Fechá-lo contra o pulo puxaria a
   câmera para o lado errado — foi o que acontecia ao cruzar para a metade direita e pular.
-- O erro fecha com `__ease_step`: passo cheio longe do alvo, proporcional dentro de `slide_near`.
+- O erro fecha com `__ease_step`, a até `look_ahead_rate` mais metade da variação do alvo: passo
+  cheio longe do alvo, proporcional dentro de `slide_near`. É o que limita quanto a câmera acelera
+  ao pagar a defasagem que a zona deixou ao soltar o eixo.
 
 ## Zonas
 
@@ -90,7 +92,7 @@ chegar no limite, e assenta exatamente nele.
 | `target` | instância seguida; trocável para uma cutscene apontar para outro alvo |
 | `offset_x` / `offset_y` | adiantamento acumulado, em px |
 | `look_ahead_max_x` / `look_ahead_max_y` | teto do adiantamento: 24 e 8 |
-| `look_ahead_rate` | quanto o offset pode mudar por frame: 0,5 |
+| `look_ahead_rate` | quanto o offset pode mudar por frame, base do fechamento do erro: 0,5 |
 | `zone_slide_rate` | quanto o eixo travado anda por frame: 2 |
 | `slide_near` | distância em que o passo desacelera até o alvo: 16 |
 | `view_precision` | precisão da posição da view: 0,01 px |

@@ -92,7 +92,7 @@
         if (_follow == 0) return 0;
 
         var _residual = _last - _pos;
-        var _rate = look_ahead_rate + abs(_follow);
+        var _rate = look_ahead_rate + abs(_follow) * .5;
 
         if (_residual * _follow < 0) return _follow;
 
