@@ -8,6 +8,12 @@ if (obj_game.debug_swim.check_pressed()) {
     show_debug_message("[power_up] sem fricção " + (ignores_friction ? "ligado" : "desligado"));
 }
 
+// TODO: remover depois — junto com a entrada `debug_high_jump` do obj_game.
+if (obj_game.debug_high_jump.check_pressed()) {
+    high_jump = !high_jump;
+    show_debug_message("[power_up] pulo alto " + (high_jump ? "ligado" : "desligado"));
+}
+
 in_water = place_meeting(x, y, obj_water);
 physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
 

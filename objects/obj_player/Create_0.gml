@@ -9,6 +9,7 @@ event_inherited();
 #region Constantes
     JUMP_SPEED = 3;
     JUMP_CUT = .5;
+    HIGH_JUMP_FACTOR = 1.2;
     MOVEMENT_SPEED = 1;
     AIR_FACTOR = .5;
     SLOPE_STEP_PENALTY = 1;
@@ -31,10 +32,16 @@ event_inherited();
 
 #region Power-ups
     ignores_friction = false;
+    high_jump = false;
 
     /// @desc Liga o efeito que anula a fricção de meios como a água.
     grant_frictionless = function() {
         ignores_friction = true;
+    }
+
+    /// @desc Liga o efeito que multiplica o impulso do pulo.
+    grant_high_jump = function() {
+        high_jump = true;
     }
 #endregion
 
@@ -66,13 +73,19 @@ event_inherited();
         velocity.x = input_x * _air_speed;
     }
 
+    /// @desc Impulso do pulo, já com o fator do power-up de pulo alto.
+    /// @return {Real}
+    get_jump_speed = function() {
+        return JUMP_SPEED * (high_jump ? HIGH_JUMP_FACTOR : 1);
+    }
+
     /// @desc Consome o buffer e aplica o impulso do pulo, se houver aperto.
     /// @return {Bool}
     try_jump = function() {
         if (!obj_game.jump.check_pressed(true)) return false;
 
         obj_game.jump.consume_press();
-        velocity.y = -JUMP_SPEED * physics_factor;
+        velocity.y = -get_jump_speed() * physics_factor;
         state_machine.change_state("jump");
 
         return true;

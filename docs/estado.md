@@ -55,7 +55,7 @@ Os setters são `static` — as funções são compartilhadas entre todos os est
 ## Armadilhas
 
 - **Lambda inline perde o `self` do ator.** `set_update(function() { velocity.x = 0; })` estoura, porque essa função nasce dentro de `State.set_update`, cujo `self` é o `State`. Declare o método no ator e passe a referência.
-- **A gravidade roda antes da máquina, e isso é intencional.** No player, o impulso do pulo é absoluto (`velocity.y = -JUMP_SPEED`) e precisa sobrescrever o `+GRAVITY` do frame. Inverter a ordem faz o primeiro frame do pulo valer `-JUMP_SPEED + GRAVITY`.
+- **A gravidade roda antes da máquina, e isso é intencional.** No player, o impulso do pulo é absoluto (`velocity.y = -get_jump_speed()`) e precisa sobrescrever o `+GRAVITY` do frame. Inverter a ordem faz o primeiro frame do pulo valer `-get_jump_speed() + GRAVITY`.
 - **Troca dentro do `update` não roda o estado novo no mesmo frame.** A máquina atualiza um estado por frame; quando o callback troca, a conta do `time` daquele frame fica com o estado novo em `0`.
 - **`change_state` para o mesmo estado reinicia.** Não há atalho: o `destroy` roda e o `create` também. Útil para reiniciar, surpreendente se você esperava um no-op.
 - **Nome inexistente não troca nem destrói.** Avisa por `show_debug_message` e retorna; o estado atual continua ativo.
