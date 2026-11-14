@@ -10,6 +10,7 @@ event_inherited();
     JUMP_SPEED = 3;
     JUMP_CUT = .5;
     HIGH_JUMP_FACTOR = 1.2;
+    DOUBLE_JUMP_FACTOR = .6;
     MOVEMENT_SPEED = 1;
     AIR_FACTOR = .5;
     SLOPE_STEP_PENALTY = 1;
@@ -33,6 +34,7 @@ event_inherited();
 #region Power-ups
     ignores_friction = false;
     high_jump = false;
+    double_jump = false;
 
     /// @desc Liga o efeito que anula a fricção de meios como a água.
     grant_frictionless = function() {
@@ -43,12 +45,19 @@ event_inherited();
     grant_high_jump = function() {
         high_jump = true;
     }
+
+    /// @desc Liga o efeito que concede um pulo extra e libera o pulo aéreo atual.
+    grant_double_jump = function() {
+        double_jump = true;
+        air_jump_used = false;
+    }
 #endregion
 
 #region Estados
     input_x = 0;
     in_water = false;
     physics_factor = 1;
+    air_jump_used = false;
     state_machine = new StateMachine();
 
     /// @desc Aplica a regra horizontal do chão.
@@ -86,6 +95,24 @@ event_inherited();
 
         obj_game.jump.consume_press();
         velocity.y = -get_jump_speed() * physics_factor;
+        state_machine.change_state("jump");
+
+        return true;
+    }
+
+    /// @desc Consome o buffer e aplica o pulo extra com o fator do pulo duplo, se ainda houver um.
+    /// @return {Bool}
+    try_air_jump = function() {
+        if (!double_jump || air_jump_used) return false;
+
+        var _terminal_speed = TERMINAL_SPEED * physics_factor;
+
+        if (velocity.y >= _terminal_speed) return false;
+        if (!obj_game.jump.check_pressed(true)) return false;
+
+        obj_game.jump.consume_press();
+        air_jump_used = true;
+        velocity.y = -get_jump_speed() * DOUBLE_JUMP_FACTOR * physics_factor;
         state_machine.change_state("jump");
 
         return true;
@@ -130,7 +157,7 @@ event_inherited();
         if (velocity.y >= 0) state_machine.change_state("fall");
     }
 
-    /// @desc Queda: controle aéreo e pouso, com pulo se o buffer estiver ativo.
+    /// @desc Queda: controle aéreo e pouso, com pulo do chão ou aéreo se o buffer estiver ativo.
     on_fall_update = function() {
         if (is_grounded()) {
             apply_ground_movement();
@@ -142,6 +169,8 @@ event_inherited();
         }
 
         apply_air_movement();
+
+        if (try_air_jump()) return;
     }
 
     state_machine

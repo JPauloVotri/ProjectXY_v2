@@ -23,9 +23,13 @@
 
     // TODO: remover depois — entrada de teste do power-up de nado.
     debug_swim = input_manager.create_input()
-        .add_keyboard_key(ord("T"));
+        .add_keyboard_key(ord("P"));
 
     // TODO: remover depois — entrada de teste do power-up de pulo alto.
     debug_high_jump = input_manager.create_input()
-        .add_keyboard_key(ord("H"));
+        .add_keyboard_key(ord("O"));
+
+    // TODO: remover depois — entrada de teste do power-up de pulo duplo.
+    debug_double_jump = input_manager.create_input()
+        .add_keyboard_key(ord("I"));
 #endregion

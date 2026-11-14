@@ -14,6 +14,13 @@ if (obj_game.debug_high_jump.check_pressed()) {
     show_debug_message("[power_up] pulo alto " + (high_jump ? "ligado" : "desligado"));
 }
 
+// TODO: remover depois — junto com a entrada `debug_double_jump` do obj_game.
+if (obj_game.debug_double_jump.check_pressed()) {
+    double_jump = !double_jump;
+    air_jump_used = false;
+    show_debug_message("[power_up] pulo duplo " + (double_jump ? "ligado" : "desligado"));
+}
+
 in_water = place_meeting(x, y, obj_water);
 physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
 
@@ -27,8 +34,12 @@ if (velocity.y > _terminal_speed) {
 
 state_machine.update();
 
-if (is_grounded() && velocity.y > 0) {
-    velocity.y = 0;
+if (is_grounded()) {
+    air_jump_used = false;
+
+    if (velocity.y > 0) {
+        velocity.y = 0;
+    }
 }
 
 move();
