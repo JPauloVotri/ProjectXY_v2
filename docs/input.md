@@ -95,6 +95,7 @@ Transições a cada `update()`:
 | `left` | seta esquerda, `A` | D-pad esquerdo, analógico esquerdo para a esquerda |
 | `right` | seta direita, `D` | D-pad direito, analógico esquerdo para a direita |
 | `jump` | espaço | botão de face de baixo |
+| `restart` | F5 | — |
 
 ## Desvios do original
 
@@ -116,6 +117,7 @@ O sistema parte do recurso de input do gm48.net (Mimpy, 2021). As diferenças ab
 - **`consume_press()` consome mesmo quando a ação não acontece.** Chame só depois de confirmar a condição (no pulo, depois do `is_grounded()`).
 - **O analógico não tem histerese.** Uma direção liga acima da `deadzone` e desliga logo abaixo, então há chacoalho exatamente no limite.
 - **`buffer = 0` é válido, mas a janela de liberação dura um frame.** Bom para menu, apertado para plataforma.
+- **Reiniciar espera a tecla soltar.** `game_restart()` recria o `obj_game`, e a instância nova veria o F5 ainda pressionado como um aperto novo: com `check_pressed` a partida reiniciaria em laço enquanto a tecla estivesse segurada. O `restart` lê `check_released`.
 
 ## Exemplos
 

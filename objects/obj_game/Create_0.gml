@@ -18,6 +18,9 @@
         .add_keyboard_key(vk_space)
         .add_gamepad_button(gp_face1);
 
+    restart = input_manager.create_input()
+        .add_keyboard_key(vk_f5);
+
     // TODO: remover depois — entrada de teste do power-up de nado.
     debug_swim = input_manager.create_input()
         .add_keyboard_key(ord("T"));

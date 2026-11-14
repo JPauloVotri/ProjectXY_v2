@@ -34,8 +34,8 @@ Todo frame, o End Step chama `update_view()`:
 
 1. Acumula a velocidade do alvo no adiantamento (`offset_x`/`offset_y`), limitado por
    `look_ahead_rate` por frame e por `look_ahead_max_*` no total.
-2. Calcula o desejado: `alvo + adiantamento − metade da tela`, limitado pela room.
-3. Aplica as zonas, que podem travar um dos eixos.
+2. Calcula o desejado: `alvo + adiantamento − metade da tela`, sem limite nenhum.
+3. Aplica as zonas e limita o resultado pela room, o que pode travar um dos eixos.
 4. Move a view até a posição corrigida (`__slide_to`), arredonda com `view_precision` e entrega a
    fração ao recorte.
 
@@ -114,6 +114,9 @@ chegar no limite, e assenta exatamente nele.
 - **O limite da sala usa `game_width`, não o tamanho da view.** Quem define o que aparece é o
   recorte de 320, não a view de 321. Limitar por `room_width - 321` faz a última coluna do mundo
   ser cortada na borda direita, porque o recorte nunca chega ao fim da view.
+- **O limite da sala passa pelo mesmo deslize das zonas.** O desejado é sempre cru; quem limita é o
+  alvo, em `__resolve_zones`. Com o desejado já limitado, `_follow` zerava ao encostar na borda e o
+  erro pendente ficava parado: a câmera congelava antes do limite, com o alvo saindo do quadro.
 - **Sem o `+1`, o recorte sai da surface.** Com `frac` próximo de 1, a janela de 320 precisaria
   de uma coluna além do que existe.
 - **Rampa e degrau não geram `velocity.y`.** O movimento vertical vem do `move()`, que empilha
@@ -121,10 +124,9 @@ chegar no limite, e assenta exatamente nele.
 - **A revelação da zona secreta é permanente.** Não há como re-bloquear uma zona já revelada.
 - **A posição é arredondada a cada frame.** É o que assenta a view perto do alvo, em vez de
   deixá-la rastejando por frações de pixel.
-- **O passo do eixo travado pode cair dentro de uma célula da precisão.** Perto do limite,
-  `__ease_step` encolhe o passo até ele não cruzar mais o arredondamento de `view_precision`, e a
-  view estaciona antes do limite — com o recorte mostrando a coluna proibida na borda. Por isso
-  `__axis_step` entrega o resto quando o passo fica menor que a precisão.
+- **A cauda da desaceleração não pode rastejar.** Perto do limite, `__ease_step` encolhe o passo a
+  cada frame; entregar o resto só quando o passo ficava abaixo de `view_precision` deixava a view
+  até 20 frames deslizando menos de 1px. Por isso a entrega vale quando falta menos de 1px.
 - **A aplicação surface está desligada.** `application_surface_enable(false)` vale para o jogo
   inteiro: qualquer efeito futuro que dependa dela (pós-processamento, cópia de surface) precisa
   de outro caminho.

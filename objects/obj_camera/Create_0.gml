@@ -39,8 +39,8 @@
         offset_x += __offset_step(offset_x, _step_x, look_ahead_max_x);
         offset_y += __offset_step(offset_y, _step_y, look_ahead_max_y);
 
-        var _view_x = clamp(target.x + offset_x - game_width * .5, 0, room_width - game_width);
-        var _view_y = clamp(target.y + offset_y - game_height * .5, 0, room_height - game_height);
+        var _view_x = target.x + offset_x - game_width * .5;
+        var _view_y = target.y + offset_y - game_height * .5;
         var _view = __resolve_zones(_view_x, _view_y);
 
         __slide_to(_view.x, _view.y, _view_x, _view_y);
@@ -82,9 +82,8 @@
     __axis_step = function(_pos, _target, _desired, _last) {
         if (_target != _desired) {
             var _delta = _target - _pos;
-            var _step = __ease_step(_delta, zone_slide_rate, slide_near);
 
-            return abs(_step) < view_precision ? _delta : _step;
+            return abs(_delta) <= 1 ? _delta : __ease_step(_delta, zone_slide_rate, slide_near);
         }
 
         var _follow = _desired - _last;
@@ -149,8 +148,8 @@
     }
 
     /// @desc Aplica as zonas ao desejado e limita o resultado pela room.
-    /// @param {Real} _x Desejado em x, já limitado pela room.
-    /// @param {Real} _y Desejado em y, já limitado pela room.
+    /// @param {Real} _x Desejado em x, ainda sem limites.
+    /// @param {Real} _y Desejado em y, ainda sem limites.
     /// @return {Struct.Vector2} Posição corrigida, dentro da room.
     __resolve_zones = function(_x, _y) {
         var _pos = new Vector2(_x, _y);
