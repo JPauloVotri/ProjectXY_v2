@@ -61,14 +61,17 @@ refactor: Fecha o acesso aos privados e unifica a velocidade do ar
 - Faz as fontes do controle guardarem o gerenciador.
 ```
 
-Never mention `.yyp`, JSDoc, file names, or method counts. Show the message and wait for explicit
-approval before committing — a request to implement is not permission to commit. Work lands on
-`main`; no PR workflow.
+Never mention `.yyp`, JSDoc, file names, or method counts. Draft the message only when asked to
+prepare the commit; show it and wait for explicit approval before committing — a request to
+implement is not permission to commit. Work lands on `main`; no PR workflow.
 
 ## Agent-Specific Instructions
 
 - Existing `.yy` metadata may be edited, never created. New objects, scripts, sprites and rooms
   are created by the user in the IDE: when one is required, say so emphatically, naming the
   resource and its contents, so it is not forgotten. Do not touch `.yyp`.
-- Update docs only while preparing a commit, auditing code against doc: names, fields, numbers,
-  stale references.
+- Docs and commit messages are written only on an explicit request, or when the user asks to
+  prepare the commit — never as a side effect of implementing a change. Read the document before
+  changing the subsystem, but leave it untouched until asked. Preparing the commit means auditing
+  code against doc (names, fields, numbers, stale references) and showing the message before
+  anything is committed.
