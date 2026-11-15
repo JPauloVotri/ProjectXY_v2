@@ -75,3 +75,5 @@ implement is not permission to commit. Work lands on `main`; no PR workflow.
   changing the subsystem, but leave it untouched until asked. Preparing the commit means auditing
   code against doc (names, fields, numbers, stale references) and showing the message before
   anything is committed.
+- `README.md` is updated automatically only when a new version is published. Feature commits
+  sync `docs/` and leave the README untouched unless the user asks for it explicitly.

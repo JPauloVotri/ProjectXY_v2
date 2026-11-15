@@ -18,6 +18,25 @@
         .add_keyboard_key(vk_space)
         .add_gamepad_button(gp_face1);
 
+    fire = input_manager.create_input()
+        .add_keyboard_key(ord("J"))
+        .add_keyboard_key(ord("C"))
+        .add_gamepad_button(gp_face3);
+
+    aim = input_manager.create_input()
+        .add_keyboard_key(vk_lshift)
+        .add_gamepad_button(gp_shoulderr);
+
+    aim_up = input_manager.create_input()
+        .add_keyboard_key(ord("W"))
+        .add_keyboard_key(vk_up)
+        .add_gamepad_button(gp_padu);
+
+    aim_down = input_manager.create_input()
+        .add_keyboard_key(ord("S"))
+        .add_keyboard_key(vk_down)
+        .add_gamepad_button(gp_padd);
+
     restart = input_manager.create_input()
         .add_keyboard_key(vk_f5);
 

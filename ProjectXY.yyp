@@ -40,6 +40,7 @@
   "name":"ProjectXY",
   "resources":[
     {"id":{"name":"obj_actor","path":"objects/obj_actor/obj_actor.yy",},},
+    {"id":{"name":"obj_bullet","path":"objects/obj_bullet/obj_bullet.yy",},},
     {"id":{"name":"obj_camera_zone_secret","path":"objects/obj_camera_zone_secret/obj_camera_zone_secret.yy",},},
     {"id":{"name":"obj_camera_zone","path":"objects/obj_camera_zone/obj_camera_zone.yy",},},
     {"id":{"name":"obj_camera","path":"objects/obj_camera/obj_camera.yy",},},
@@ -60,6 +61,7 @@
     {"id":{"name":"scr_state_machine","path":"scripts/scr_state_machine/scr_state_machine.yy",},},
     {"id":{"name":"scr_state","path":"scripts/scr_state/scr_state.yy",},},
     {"id":{"name":"scr_vector_2","path":"scripts/scr_vector_2/scr_vector_2.yy",},},
+    {"id":{"name":"spr_bullet","path":"sprites/spr_bullet/spr_bullet.yy",},},
     {"id":{"name":"spr_camera_zone_secret","path":"sprites/spr_camera_zone_secret/spr_camera_zone_secret.yy",},},
     {"id":{"name":"spr_camera_zone","path":"sprites/spr_camera_zone/spr_camera_zone.yy",},},
     {"id":{"name":"spr_player","path":"sprites/spr_player/spr_player.yy",},},

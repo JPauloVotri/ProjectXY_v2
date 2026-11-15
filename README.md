@@ -4,7 +4,7 @@
 
 Protótipo de plataforma 2D em GameMaker LTS 2026. Há uma sala só, de 960×360, com resolução
 interna de 320×180 rodando a 60 fps. Não existe objetivo nem condição de vitória: o que está em
-teste é o movimento, a água, a câmera e os power-ups.
+teste é o movimento, a água, a câmera, os power-ups e o tiro.
 
 ## Rodar pela IDE
 
@@ -27,10 +27,17 @@ então ele vem pronto de quem compilou.
 | Andar para a esquerda | `←` ou `A` | D-pad esquerdo ou analógico esquerdo |
 | Andar para a direita | `→` ou `D` | D-pad direito ou analógico esquerdo |
 | Pular | `Espaço` | `A` no Xbox, `✕` no PlayStation |
+| Atirar | `J` ou `C` | `X` no Xbox, `□` no PlayStation |
+| Mirar na diagonal | `LShift` + `↑`/`↓` (ou `W`/`S`) | `RB`/`R1` + D-pad ↑/↓ |
+| Mirar reto para cima/baixo | `↑`/`↓` (ou `W`/`S`) sem a mira e parado | D-pad ↑/↓ sem `RB`/`R1` e parado |
 | Reiniciar | `F5` | — |
 
 - `A` e `✕` são o mesmo botão físico, o de face de baixo: o Xbox chama de `A` e o PlayStation
-  de `✕` (Xis).
+  de `✕` (Xis). `X` e `□` também são o mesmo botão, o de face da esquerda.
+- `RB` e `R1` são o mesmo botão, o ombro direito.
+- `J` atende quem anda com `A`/`D`; `C` atende quem anda com as setas.
+- Andando, `↑`/`↓` junto com a direção também escolhe a diagonal, mesmo sem a mira; a última
+  diagonal fica lembrada.
 - O pulo tem altura variável: soltar o botão durante a subida corta o resto.
 - O controle é detectado sozinho. No Linux ele pode ser enumerado num slot alto; se nada
   responder, conecte o controle antes de abrir o jogo e procure a mensagem
@@ -44,6 +51,12 @@ então ele vem pronto de quem compilou.
   direção, e o personagem não desliza ao parar.
 - **Pulo curto e longo.** Um toque sobe ~14 px; segurando o botão o pulo chega a ~46 px. Soltar no
   meio da subida corta o que falta.
+- **Tiro.** O projétil sai da borda do corpo, morre em parede, chão e rampa e some 64 px fora da
+  câmera. São três círculos em rastro, com uma ondulação pequena.
+- **Mira.** Segurar `RB`/`R1` ou `LShift` e apertar `↑`/`↓` escolhe a diagonal, que fica lembrada
+  para a próxima vez. Andando, `↑`/`↓` junto com a direção também dá a diagonal. Sem a mira e
+  parado, `↑`/`↓` atiram reto para cima ou para baixo. Não existe tiro para trás.
+- **Cadência.** Segurar o tiro dispara a cada 20 frames; o primeiro sai no frame do aperto.
 - **Rampa e degrau.** A rampa de 45° anda na metade da velocidade. Degrau de 1 px é vencido; de
   2 px em diante, bloqueia como parede.
 - **Água.** Queda, corrida e pulo caem pela metade, então o pulo fica em ~23 px. Dá para afundar e
@@ -68,13 +81,13 @@ para remoção, e servem só para testar um efeito isolado sem ir atrás do pick
 
 ## O que ainda não existe
 
-Sem objetivo ou fim de fase, sem som, sem animação (os sprites têm um frame só), sem dano ou
-morte, sem menu ou pausa, e nada persiste entre reinícios.
+Sem objetivo ou fim de fase, sem som, sem animação (o projétil usa três frames parados como
+rastro), sem dano ou morte, sem menu ou pausa, e nada persiste entre reinícios.
 
 ## Detalhes técnicos
 
-Os subsistemas estão documentados em `docs/`: `movimento.md`, `input.md`, `estado.md`,
-`camera.md` e `vector2.md`.
+Os subsistemas estão documentados em `docs/`: `movimento.md` (movimento e tiro), `input.md`,
+`estado.md`, `camera.md` e `vector2.md`.
 
 O sistema de input parte do recurso do [gm48.net](https://gm48.net) (Mimpy, 2021), com desvios
 descritos em `docs/input.md`.

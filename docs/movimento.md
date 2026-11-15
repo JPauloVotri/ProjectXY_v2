@@ -1,6 +1,6 @@
-# Movimento
+# Movimento e tiro
 
-Sistema de movimentação por colisão de passo, dividido entre `objects/obj_actor` (base genérica) e `objects/obj_player` (controle do jogador). Posição sempre em pixel inteiro, velocidade fracionária acumulada em `velocity_remainder`, e um passo de 1px por eixo por iteração. Requer GML 2.3 ou superior (usa métodos de instância).
+Sistema de movimentação por colisão de passo e de tiro, dividido entre `objects/obj_actor` (base genérica), `objects/obj_player` (controle do jogador) e `objects/obj_bullet` (projétil). Posição sempre em pixel inteiro, velocidade fracionária acumulada em `velocity_remainder`, e um passo de 1px por eixo por iteração. Requer GML 2.3 ou superior (usa métodos de instância).
 
 Este documento é a fonte de verdade do sistema. Os comentários `///` no código alimentam o autocomplete e a validação de tipos do Feather.
 
@@ -19,6 +19,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 |---|---|
 | `obj_actor` | base sem sprite: guarda estado, `move()` e os hooks padrão |
 | `obj_player` | herda de `obj_actor`; define as constantes e sobrescreve os hooks de x |
+| `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks e desenha o rastro de três frames |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
 | `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
 | `obj_power_up` | marcador sem sprite: todo tipo de power-up herda dele |
@@ -128,12 +129,13 @@ A base declara `on_collect` com `return false`, então um tipo que esqueça a so
 | `AIR_FACTOR` | `.5` | fração da `MOVEMENT_SPEED` aplicada no ar |
 | `SLOPE_STEP_PENALTY` | `1` | px extras cobrados por degrau vencido |
 | `SLOPE_MAX_PENALTY` | `.99` | teto da penalidade acumulada na rampa |
+| `FIRE_COOLDOWN` | `20` | frames entre tiros; também é a espera do disparo automático |
 
 Com esses valores e o pulo alto desligado, o pulo sobe **46px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 45, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 61.
 
 ### Estados (`obj_player`)
 
-O `Step` coleta o input, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão e chama `move()`. A regra horizontal, o impulso do pulo e o corte moram nos estados.
+O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()` e tenta disparar. A regra horizontal, o impulso do pulo e o corte moram nos estados.
 
 | Estado | Entra quando | Comportamento | Sai para |
 |---|---|---|---|
@@ -214,9 +216,48 @@ Para testar existe um toggle temporário na tecla **I**, marcado no código com 
 |---|---|
 | `set_facing(_dir)` | grava `facing` e aplica em `image_xscale`; ignora `0` |
 
-A direção vem do **input**, não da velocidade: o Step chama `set_facing(_input)` sempre que `_input != 0`. Parado, ou sem direção no ar, o último lado é preservado. Apertar as duas direções ao mesmo tempo dá `_input == 0` e não vira.
+A direção vem do **input**, não da velocidade: o Step chama `set_facing(_input)` sempre que `_input != 0`. Parado, ou sem direção no ar, o último lado é preservado. Apertar as duas direções ao mesmo tempo dá `_input == 0` e não vira. A mira não muda o `facing`: ela parte dele.
 
-`set_facing` é o único ponto que traduz estado em sprite. Quando existirem sprites separadas por lado, só ele muda — `facing` continua o mesmo, e é ele que uma mecânica futura consulta para saber se o jogador está olhando para algo.
+`set_facing` é o único ponto que traduz estado em sprite. Quando existirem sprites separadas por lado, só ele muda — `facing` continua o mesmo, e é ele que a mira consulta para montar a direção do tiro.
+
+### Tiro
+
+O `Step` monta a mira no topo e chama `try_fire()` no fim, depois do `move()`; `fire_cooldown` desce um por frame. `aim_vertical` guarda a última diagonal (−1 cima, 1 baixo) e começa em `-1`.
+
+**Mira.** `aim_direction` é sempre um dos vetores abaixo e nunca aponta para trás:
+
+| Situação | `aim_direction` |
+|---|---|
+| mira segurada, sem ↑/↓ | `(facing, aim_vertical)` |
+| mira segurada + ↑ ou ↓ | diagonal escolhida; atualiza `aim_vertical` |
+| sem mira, andando + ↑ ou ↓ | `(facing, ±1)`; atualiza `aim_vertical` |
+| sem mira, parado + ↑ ou ↓ | `(0, ±1)` |
+| sem mira, sem ↑/↓ | `(facing, 0)` |
+| ↑ e ↓ juntos | cancela: diagonal lembrada com a mira, horizontal sem ela |
+
+O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não há tiro para trás. Para virar, o jogador precisa andar para o outro lado.
+
+**Boca.** `get_muzzle_position(_direction)` cruza o raio da mira com o bbox contínuo e devolve o ponto na borda. Com o corpo de 8×16, os tiros saem de `x ± 4` na horizontal, `y ± 8` na vertical e `(facing * 4, ±4)` nas diagonais.
+
+**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O primeiro tiro sai no frame do aperto.
+
+**Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 6×6 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked` e `on_y_blocked` só marcam `hit`; o Step destrói depois do `move()`, nunca dentro do laço.
+
+O tiro morre em `obj_solid` e, sem alcance fixo, quando o centro passa `DESPAWN_MARGIN = 64` px para fora da view de `view_camera[0]` em qualquer lado. Se a câmera se afastar dele, ele também some.
+
+| Constante | Valor | Efeito |
+|---|---|---|
+| `BULLET_SPEED` | `3` | px/frame ao longo da direção |
+| `DESPAWN_MARGIN` | `64` | px além da view em que o tiro some |
+| `TRAIL_LENGTH` | frames do sprite (`3`) | quantidade de círculos do rastro |
+| `TRAIL_SPACING` | largura do frame − 2 (`4`) | distância entre os centros; com o sprite 6×6 sobram 2 px de sobreposição |
+| `TRAIL_WAVE_AMPLITUDE` | `1` | px de ondulação perpendicular ao trajeto |
+| `TRAIL_WAVE_SPEED` | `22.5` | graus por frame; um ciclo a cada 16 frames |
+| `TRAIL_WAVE_PHASE` | `180` | defasagem entre os círculos do rastro, em graus |
+
+**Desenho.** O Draw vai do frame mais atrás para o mais à frente, então a cabeça fica por cima. Só a cabeça (frame 0) segue o caminho exato; os outros recebem `sin` da fase, com deslocamento perpendicular a `travel_direction` e posições arredondadas para pixel inteiro. A onda é só de desenho: não altera a posição, a colisão nem o despawn.
+
+O `obj_bullet` não é posicionado na room; quem cria é o `try_fire()` do player.
 
 ### Degraus
 
@@ -264,6 +305,11 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O segundo pulo é um só e só na descida.** `air_jump_used` zera no chão e na coleta; apertar durante a subida só fica no buffer de 5 frames. Na velocidade terminal o segundo pulo não dispara.
 - **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 8 px.
 - **Nenhuma base se posiciona.** `obj_pickup` e `obj_power_up` não têm sprite: a instância da room é sempre um tipo com sprite própria, e uma instância da base estoura na checagem de colisão do `Step`.
+- **O tiro não sai para trás.** A mira usa `facing` ou `0` no eixo x; para virar, o jogador precisa andar para o outro lado.
+- **A diagonal lembrada sobrevive à soltura da mira.** `aim_vertical` só muda com ↑/↓ enquanto a mira está segurada ou o jogador anda; o tiro vertical não a altera.
+- **O projétil expira pela câmera, não por tempo ou alcance.** Ele some `64px` fora da view; se a câmera se afastar, ele morre antes de sair da tela.
+- **Não destrua o projétil dentro do hook.** O laço do `move()` continua depois do hook; o tiro marca `hit` e só destrói no fim do Step.
+- **A onda do rastro é só desenho.** O deslocamento perpendicular não entra na posição nem na máscara do projétil.
 
 ## Exemplos
 

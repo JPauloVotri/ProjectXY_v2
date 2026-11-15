@@ -15,6 +15,7 @@ event_inherited();
     AIR_FACTOR = .5;
     SLOPE_STEP_PENALTY = 1;
     SLOPE_MAX_PENALTY = .99;
+    FIRE_COOLDOWN = 20;
 #endregion
 
 #region Aparência
@@ -28,6 +29,52 @@ event_inherited();
 
         facing = _dir;
         image_xscale = _dir;
+    }
+#endregion
+
+#region Tiro
+    /// @desc Direção do próximo tiro: horizontal, diagonal para frente ou vertical.
+    aim_direction = new Vector2(facing, 0);
+
+    /// @desc Sinal vertical da diagonal lembrada: -1 para cima, 1 para baixo.
+    aim_vertical = -1;
+
+    fire_cooldown = 0;
+
+    /// @desc Ponto da borda do corpo na direção da mira, de onde o tiro sai.
+    /// @param {Struct.Vector2} _direction Direção da mira, horizontal, diagonal ou vertical.
+    /// @return {Struct.Vector2} Ponto na borda do bbox.
+    get_muzzle_position = function(_direction) {
+        var _extent_x = _direction.x > 0 ? bbox_right - x + 1 : x - bbox_left;
+        var _extent_y = _direction.y > 0 ? bbox_bottom - y + 1 : y - bbox_top;
+        var _distance = infinity;
+
+        if (_direction.x != 0) {
+            _distance = min(_distance, _extent_x / abs(_direction.x));
+        }
+
+        if (_direction.y != 0) {
+            _distance = min(_distance, _extent_y / abs(_direction.y));
+        }
+
+        return new Vector2(x + _direction.x * _distance, y + _direction.y * _distance);
+    }
+
+    /// @desc Dispara na direção da mira, se o botão estiver apertado e a espera tiver passado.
+    /// @return {Bool} `true` se o tiro nasceu.
+    try_fire = function() {
+        if (fire_cooldown > 0) return false;
+        if (!obj_game.fire.check()) return false;
+
+        var _muzzle = get_muzzle_position(aim_direction);
+
+        /// @type {Id.Instance.obj_bullet}
+        var _bullet = instance_create_layer(_muzzle.x, _muzzle.y, "Instances", obj_bullet);
+
+        _bullet.launch(aim_direction);
+        fire_cooldown = FIRE_COOLDOWN;
+
+        return true;
     }
 #endregion
 

@@ -21,7 +21,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 |---|---|
 | `obj_game` | dono do gerenciador (`input_manager`): registra os inputs, avança o estado e acompanha o controle |
 
-`obj_game` é persistente e existe uma única vez, no `rm_room_1`. Salas futuras não devem colocá-lo de novo. O player lê `obj_game.left`, `obj_game.right` e `obj_game.jump` em tempo de execução — não cacheia no Create, porque a ordem de criação das instâncias não é garantida.
+`obj_game` é persistente e existe uma única vez, no `rm_room_1`. Salas futuras não devem colocá-lo de novo. O player lê `obj_game.left`, `obj_game.right`, `obj_game.jump`, `obj_game.fire`, `obj_game.aim`, `obj_game.aim_up` e `obj_game.aim_down` em tempo de execução — não cacheia no Create, porque a ordem de criação das instâncias não é garantida.
 
 ### `InputManager`
 
@@ -86,7 +86,7 @@ Transições a cada `update()`:
 
 ### `INPUT_AXIS`
 
-`RIGHT`, `UP`, `LEFT`, `DOWN` — a direção pedida ao analógico. A fonte converte em eixo (`gp_axislh`/`gp_axislv`) e sinal, e compara o valor descontado da `deadzone`.
+`RIGHT`, `UP`, `LEFT`, `DOWN` — a direção pedida ao analógico. A fonte converte em eixo (`gp_axislh`/`gp_axislv` no esquerdo, `gp_axisrh`/`gp_axisrv` no direito) e sinal, e compara o valor descontado da `deadzone`.
 
 ### Bindings de `obj_game`
 
@@ -95,7 +95,14 @@ Transições a cada `update()`:
 | `left` | seta esquerda, `A` | D-pad esquerdo, analógico esquerdo para a esquerda |
 | `right` | seta direita, `D` | D-pad direito, analógico esquerdo para a direita |
 | `jump` | espaço | botão de face de baixo |
+| `fire` | `J`, `C` | botão de face da esquerda (X no Xbox, quadrado no PlayStation) |
+| `aim` | LShift | RB no Xbox, R1 no PlayStation |
+| `aim_up` | `W`, seta para cima | D-pad para cima |
+| `aim_down` | `S`, seta para baixo | D-pad para baixo |
 | `restart` | F5 | — |
+
+- `J` atende quem anda com `A`/`D`; `C` atende quem anda com as setas.
+- `aim` é um modificador, não uma direção: o player escolhe a diagonal com `aim_up`/`aim_down` enquanto a mira está segurada e, sem ela, lê os mesmos botões como tiro vertical. O analógico direito não é usado por nenhum binding hoje.
 
 ## Desvios do original
 
