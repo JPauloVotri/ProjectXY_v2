@@ -50,6 +50,15 @@ function StateMachine() constructor {
         return self;
     }
 
+    /// @desc Verdadeiro quando o estado atual é o de nome informado.
+    /// @param {String} _name Nome do estado.
+    /// @return {Bool}
+    static is_state = function(_name) {
+        if (!is_instanceof(state, State)) return false;
+
+        return state.name == _name;
+    }
+
     /// @desc Atualiza o estado atual e incrementa o contador de tempo.
     static update = function() {
         if (!is_instanceof(state, State)) return;

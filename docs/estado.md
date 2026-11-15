@@ -43,6 +43,7 @@ Os setters são `static` — as funções são compartilhadas entre todos os est
 | `add_state(_state)` | `StateMachine` (self) | registra; o primeiro vira o estado atual e roda o `create` |
 | `change_state(_name)` | — | valida, destrói o atual, zera `time` e roda o `create` do novo |
 | `update()` | — | roda o `update` do estado e incrementa `time` |
+| `is_state(_name)` | `Bool` | verdadeiro quando o estado atual é o de nome informado |
 
 ### Ciclo de vida
 
