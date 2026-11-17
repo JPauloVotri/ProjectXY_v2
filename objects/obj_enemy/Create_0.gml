@@ -16,9 +16,17 @@ event_inherited();
     DAMAGE_THRESHOLD = 1;
 #endregion
 
-#region Hooks
-    /// @desc Roda uma vez com a vida em zero, antes da instância morrer.
+#region Morte
+    /// @desc Destrói a instância ao zerar a vida; desligue para tocar a animação de morte.
+    DESTROY_ON_DEATH = true;
+
+    /// @desc Roda uma vez com a vida em zero.
     on_death = function() {}
+
+    /// @desc Cria o efeito padrão da morte; filhos sobrescrevem para trocar ou desligar.
+    on_death_effect = function() {
+        instance_create_layer(x, y, self.layer, obj_explosion_enemy);
+    }
 #endregion
 
 #region Dano
@@ -41,8 +49,12 @@ event_inherited();
         current_health = max(current_health - _amount, 0);
 
         if (current_health == 0) {
+            on_death_effect();
             on_death();
-            instance_destroy();
+
+            if (DESTROY_ON_DEATH) {
+                instance_destroy();
+            }
 
             return true;
         }

@@ -263,7 +263,7 @@ event_inherited();
 
     /// @desc Leva as lâminas junto.
     on_death = function() {
-        // TODO: Soltar o efeito e tocar o som da morte aqui.
+        // TODO: Tocar o som da morte aqui.
 
         instance_destroy(blades);
     }

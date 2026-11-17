@@ -247,6 +247,8 @@ Depois do `move()`, o Step procura `obj_enemy` na posição final: achando, cham
 
 O tiro morre em `obj_solid` e em `obj_enemy`; sem alcance fixo, morre também quando o centro passa `DESPAWN_MARGIN = 64` px para fora da view de `view_camera[0]` em qualquer lado. Se a câmera se afastar dele, ele também some.
 
+Morrendo por colisão, solta `obj_explosion_bullet` na posição final, na própria camada; expirando pela câmera, não solta nada.
+
 | Constante | Valor | Efeito |
 |---|---|---|
 | `BULLET_SPEED` | `3` | px/frame ao longo da direção |
