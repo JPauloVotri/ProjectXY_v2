@@ -282,6 +282,28 @@ event_inherited();
 #endregion
 
 #region Aparência
+    /// @desc Frames que o núcleo passa aceso e também apagado na velocidade de rastejo: 6 a
+    /// 60 fps dão 10 trocas por segundo num ciclo de dois.
+    CORE_BLINK_INTERVAL = 12;
+
+    /// @desc Posição no ciclo do piscar, em frames de rastejo: anda só enquanto ele rasteja.
+    core_time = 0;
+
+    /// @desc Verdadeiro nos frames em que o núcleo está aceso.
+    /// @return {Bool}
+    is_core_lit = function() {
+        return (core_time div CORE_BLINK_INTERVAL) % 2 == 0;
+    }
+
+    /// @desc Acende o núcleo por cima do corpo; some no branco e fica apagado fora do rastejo.
+    on_draw = function() {
+        if (!state_machine.is_state("crawl")) return;
+        if (!is_core_lit()) return;
+        if (is_flashing()) return;
+
+        draw_sprite(spr_crawler_core, 0, x, y);
+    }
+
     /// @type {Id.Instance.obj_crawler_blades}
     blades = instance_create_layer(x, y, self.layer, obj_crawler_blades);
     blades.depth = depth - 1;

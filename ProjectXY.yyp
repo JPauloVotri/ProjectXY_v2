@@ -76,6 +76,7 @@
     {"id":{"name":"spr_camera_zone_secret","path":"sprites/spr_camera_zone_secret/spr_camera_zone_secret.yy",},},
     {"id":{"name":"spr_camera_zone","path":"sprites/spr_camera_zone/spr_camera_zone.yy",},},
     {"id":{"name":"spr_crawler_blades","path":"sprites/spr_crawler_blades/spr_crawler_blades.yy",},},
+    {"id":{"name":"spr_crawler_core","path":"sprites/spr_crawler_core/spr_crawler_core.yy",},},
     {"id":{"name":"spr_crawler","path":"sprites/spr_crawler/spr_crawler.yy",},},
     {"id":{"name":"spr_explosion_bullet","path":"sprites/spr_explosion_bullet/spr_explosion_bullet.yy",},},
     {"id":{"name":"spr_explosion_enemy","path":"sprites/spr_explosion_enemy/spr_explosion_enemy.yy",},},

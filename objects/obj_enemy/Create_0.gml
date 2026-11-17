@@ -77,3 +77,8 @@ event_inherited();
         return hurt_time > 0 && (hurt_time div HURT_FLASH_INTERVAL) % 2 == 1;
     }
 #endregion
+
+#region Desenho
+    /// @desc Desenha por cima do corpo, depois do branquejar; filhos sobrescrevem.
+    on_draw = function() {}
+#endregion
