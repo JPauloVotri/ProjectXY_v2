@@ -1,6 +1,10 @@
 event_inherited();
 
 #region Constantes
+    /// @desc Tiros que o crawler aguenta antes de morrer.
+    MAX_HEALTH = 1;
+    current_health = MAX_HEALTH;
+
     MOVEMENT_SPEED = .5;
     SLOPE_STEP_PENALTY = sqrt(2) - 1;
     SLOPE_MAX_PENALTY = .99;
@@ -255,6 +259,13 @@ event_inherited();
         if (!state_machine.is_state("crawl")) return;
 
         try_step_down(0, sign(velocity.y));
+    }
+
+    /// @desc Leva as lâminas junto.
+    on_death = function() {
+        // TODO: Soltar o efeito e tocar o som da morte aqui.
+
+        instance_destroy(blades);
     }
 #endregion
 

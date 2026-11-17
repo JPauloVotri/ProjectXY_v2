@@ -44,6 +44,10 @@ event_inherited();
     }
 #endregion
 
+#region Dano
+    BULLET_DAMAGE = 1;
+#endregion
+
 #region Hooks
     /// @desc Passo em x bloqueado: marca o tiro para ser destruído no fim do evento.
     /// @param {Id.Instance} _instance Instância que bloqueou o passo.

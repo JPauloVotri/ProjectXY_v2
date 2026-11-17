@@ -1,5 +1,3 @@
-event_inherited();
-
 #region Configuração
     /// @type {Id.Instance.obj_crawler}
     parent = noone;
@@ -15,6 +13,9 @@ event_inherited();
 
     /// @desc Quantas vezes a rolagem pura: 1 não escorrega, acima disso gira mais rápido.
     BLADE_ROLL_FACTOR = 1;
+
+    /// @desc Ligado pelo crawler enquanto o acerto branqueia o desenho.
+    flashing = false;
 
     image_speed = 0;
 #endregion

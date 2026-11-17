@@ -19,7 +19,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 |---|---|
 | `obj_actor` | base sem sprite: guarda estado, `move()` e os hooks padrão |
 | `obj_player` | herda de `obj_actor`; define as constantes e sobrescreve os hooks de x |
-| `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks e desenha o rastro de três frames |
+| `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks, fere o inimigo que encontra e desenha o rastro de três frames |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
 | `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
 | `obj_power_up` | marcador sem sprite: todo tipo de power-up herda dele |
@@ -241,14 +241,17 @@ O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não
 
 **Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O primeiro tiro sai no frame do aperto.
 
-**Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 6×6 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked` e `on_y_blocked` só marcam `hit`; o Step destrói depois do `move()`, nunca dentro do laço.
+**Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 4×4 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked` e `on_y_blocked` só marcam `hit`; o Step destrói depois do `move()`, nunca dentro do laço.
 
-O tiro morre em `obj_solid` e, sem alcance fixo, quando o centro passa `DESPAWN_MARGIN = 64` px para fora da view de `view_camera[0]` em qualquer lado. Se a câmera se afastar dele, ele também some.
+Depois do `move()`, o Step procura `obj_enemy` na posição final: achando, chama `take_damage(BULLET_DAMAGE)` e marca `hit`. A procura roda mesmo quando o passo foi bloqueado pelo cenário — é o que permite ferir o crawler colado na parede, onde o tiro para a 1 px dela. Quem decide se o dano passa é o inimigo: vida, invencibilidade e dano mínimo moram no `obj_enemy`.
+
+O tiro morre em `obj_solid` e em `obj_enemy`; sem alcance fixo, morre também quando o centro passa `DESPAWN_MARGIN = 64` px para fora da view de `view_camera[0]` em qualquer lado. Se a câmera se afastar dele, ele também some.
 
 | Constante | Valor | Efeito |
 |---|---|---|
 | `BULLET_SPEED` | `3` | px/frame ao longo da direção |
 | `DESPAWN_MARGIN` | `64` | px além da view em que o tiro some |
+| `BULLET_DAMAGE` | `1` | dano que o tiro desconta do inimigo |
 | `TRAIL_LENGTH` | frames do sprite (`3`) | quantidade de círculos do rastro |
 | `TRAIL_SPACING` | largura do frame − 2 (`4`) | distância entre os centros; com o sprite 6×6 sobram 2 px de sobreposição |
 | `TRAIL_WAVE_AMPLITUDE` | `1` | px de ondulação perpendicular ao trajeto |
@@ -308,6 +311,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O tiro não sai para trás.** A mira usa `facing` ou `0` no eixo x; para virar, o jogador precisa andar para o outro lado.
 - **A diagonal lembrada sobrevive à soltura da mira.** `aim_vertical` só muda com ↑/↓ enquanto a mira está segurada ou o jogador anda; o tiro vertical não a altera.
 - **O projétil expira pela câmera, não por tempo ou alcance.** Ele some `64px` fora da view; se a câmera se afastar, ele morre antes de sair da tela.
+- **O tiro é consumido em qualquer inimigo que encosta.** O `hit` vem do contato, não do dano: inimigo invencível ou com limiar acima do `BULLET_DAMAGE` engole o projétil igual.
 - **Não destrua o projétil dentro do hook.** O laço do `move()` continua depois do hook; o tiro marca `hit` e só destrói no fim do Step.
 - **A onda do rastro é só desenho.** O deslocamento perpendicular não entra na posição nem na máscara do projétil.
 

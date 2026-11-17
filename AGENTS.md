@@ -36,8 +36,8 @@ rg -n "TODO: remover depois" --glob '*.gml'  # leftover test code
 - `_` prefixes locals and parameters; `__` marks private members, read only by the owning struct.
 - `#region` inside Create events that mix concerns; `self.` only in `return self;`.
 - Document with `///` and singular `@desc`/`@param`/`@return`; never leave `//` comments in
-  code. The only exception is temporary test code marked `// TODO: remover depois`, which must
-  read as a marker, not as JSDoc.
+  code. The only exceptions are markers, never JSDoc: temporary test code marked
+  `// TODO: remover depois` and future work marked `// TODO: <tarefa>`.
 - A variable gets `@desc` only when a self-descriptive name is not enough: the unit, who reads
   it, or the lifecycle is not obvious. Most fields need none.
 - Spell out the concrete resource in instance and asset types when it is known
