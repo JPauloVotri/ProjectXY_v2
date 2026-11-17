@@ -16,7 +16,7 @@
 
     look_ahead_max_x = 24;
     look_ahead_max_y = 8;
-    look_ahead_rate = .5;
+    look_ahead_rate = 1;
 
     zone_slide_rate = 2;
     slide_near = 16;

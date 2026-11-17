@@ -43,8 +43,8 @@ Todo frame, o End Step chama `update_view()`:
 
 O offset é a **integral da velocidade**, limitada por frame:
 
-- Correndo a 1 px/frame, cresce 0,5 por frame.
-- Caindo a 3 px/frame, a taxa corta para 0,5 — sem isso, o impulso do pulo (que salta de `0`
+- Correndo a 1 px/frame, cresce 1 por frame.
+- Caindo a 3 px/frame, a taxa corta para 1 — sem isso, o impulso do pulo (que salta de `0`
   para `-3` de uma vez) moveria a câmera 3px num frame só.
 - Parado, o offset **não volta**: a câmera fica onde parou até o jogador se mover para o outro
   lado.
@@ -92,7 +92,7 @@ chegar no limite, e assenta exatamente nele.
 | `target` | instância seguida; trocável para uma cutscene apontar para outro alvo |
 | `offset_x` / `offset_y` | adiantamento acumulado, em px |
 | `look_ahead_max_x` / `look_ahead_max_y` | teto do adiantamento: 24 e 8 |
-| `look_ahead_rate` | quanto o offset pode mudar por frame, base do fechamento do erro: 0,5 |
+| `look_ahead_rate` | quanto o offset pode mudar por frame, base do fechamento do erro: 1 |
 | `zone_slide_rate` | quanto o eixo travado anda por frame: 2 |
 | `slide_near` | distância em que o passo desacelera até o alvo: 16 |
 | `view_precision` | precisão da posição da view: 0,01 px |
