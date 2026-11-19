@@ -39,7 +39,7 @@
   "isEcma":false,
   "LibraryEmitters":[],
   "MetaData":{
-    "IDEVersion":"2026.0.0.16",
+    "IDEVersion":"2026.1.0.27",
   },
   "name":"ProjectXY",
   "resources":[
@@ -80,6 +80,9 @@
     {"id":{"name":"spr_crawler","path":"sprites/spr_crawler/spr_crawler.yy",},},
     {"id":{"name":"spr_explosion_bullet","path":"sprites/spr_explosion_bullet/spr_explosion_bullet.yy",},},
     {"id":{"name":"spr_explosion_enemy","path":"sprites/spr_explosion_enemy/spr_explosion_enemy.yy",},},
+    {"id":{"name":"spr_player_legs_idle","path":"sprites/spr_player_legs_idle/spr_player_legs_idle.yy",},},
+    {"id":{"name":"spr_player_legs_walk","path":"sprites/spr_player_legs_walk/spr_player_legs_walk.yy",},},
+    {"id":{"name":"spr_player_torso","path":"sprites/spr_player_torso/spr_player_torso.yy",},},
     {"id":{"name":"spr_player","path":"sprites/spr_player/spr_player.yy",},},
     {"id":{"name":"spr_power_up_double_jump","path":"sprites/spr_power_up_double_jump/spr_power_up_double_jump.yy",},},
     {"id":{"name":"spr_power_up_frictionless","path":"sprites/spr_power_up_frictionless/spr_power_up_frictionless.yy",},},

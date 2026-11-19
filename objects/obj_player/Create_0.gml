@@ -220,11 +220,100 @@ event_inherited();
         if (try_air_jump()) return;
     }
 
+#endregion
+
+#region Animação
+    WALK_FRAME_COUNT = 8;
+
+    /// @desc Distância percorrida, em px, para avançar um quadro da caminhada.
+    WALK_FRAME_DISTANCE = 4;
+
+    LEGS_IDLE = 0;
+    LEGS_IDLE_UP = 1;
+    WALK_JUMP_FRAME = 4;
+    WALK_FALL_FRAME = 6;
+
+    TORSO_HORIZONTAL = 0;
+    TORSO_DIAGONAL_UP = 1;
+    TORSO_UP = 2;
+    TORSO_DIAGONAL_DOWN = 3;
+
+    /// @desc Deslocamento vertical do torso em cada quadro da caminhada, em px.
+    WALK_TORSO_BOB_Y = [0, 0, 1, 0, 0, 0, 1, 0];
+
+    /// @desc Deslocamento vertical do torso parado, em px.
+    IDLE_TORSO_OFFSET_Y = 1;
+
+    legs_sprite = spr_player_legs_idle;
+    legs_frame = LEGS_IDLE;
+    torso_frame = TORSO_HORIZONTAL;
+    torso_offset_y = 0;
+    walk_distance = 0;
+    walk_frame = 0;
+
+    /// @desc Prepara a aparência ao entrar no estado parado.
+    on_idle_create = function() {
+        legs_sprite = spr_player_legs_idle;
+        legs_frame = (aim_direction.x == 0 && aim_direction.y < 0)
+            ? LEGS_IDLE_UP : LEGS_IDLE;
+        torso_offset_y = IDLE_TORSO_OFFSET_Y;
+    }
+
+    /// @desc Reinicia o ciclo de caminhada ao entrar no estado.
+    on_walk_create = function() {
+        legs_sprite = spr_player_legs_walk;
+        legs_frame = 0;
+        torso_offset_y = WALK_TORSO_BOB_Y[0];
+        walk_distance = 0;
+        walk_frame = 0;
+    }
+
+    /// @desc Fixa a pose de subida ao entrar no estado.
+    on_jump_create = function() {
+        legs_sprite = spr_player_legs_walk;
+        legs_frame = WALK_JUMP_FRAME;
+        torso_offset_y = WALK_TORSO_BOB_Y[WALK_JUMP_FRAME];
+    }
+
+    /// @desc Fixa a pose de queda ao entrar no estado.
+    on_fall_create = function() {
+        legs_sprite = spr_player_legs_walk;
+        legs_frame = WALK_FALL_FRAME;
+        torso_offset_y = WALK_TORSO_BOB_Y[WALK_FALL_FRAME];
+    }
+
+    /// @desc Quadro do torso correspondente à direção da mira.
+    /// @return {Real}
+    get_torso_frame = function() {
+        if (aim_direction.y == 0) return TORSO_HORIZONTAL;
+        if (aim_direction.y < 0) {
+            return aim_direction.x == 0 ? TORSO_UP : TORSO_DIAGONAL_UP;
+        }
+
+        return TORSO_DIAGONAL_DOWN;
+    }
+
+    /// @desc Avança a caminhada pela distância percorrida e atualiza o torso pela mira.
+    update_appearance = function() {
+        if (state_machine.is_state("walk")) {
+            walk_frame = floor(walk_distance / WALK_FRAME_DISTANCE) % WALK_FRAME_COUNT;
+            legs_frame = walk_frame;
+            torso_offset_y = WALK_TORSO_BOB_Y[walk_frame];
+        } else if (state_machine.is_state("idle")) {
+            legs_frame = (aim_direction.x == 0 && aim_direction.y < 0)
+                ? LEGS_IDLE_UP : LEGS_IDLE;
+        }
+
+        torso_frame = get_torso_frame();
+    }
+#endregion
+
+#region Registro
     state_machine
-        .add_state(new State("idle").set_update(on_idle_update))
-        .add_state(new State("walk").set_update(on_walk_update))
-        .add_state(new State("jump").set_update(on_jump_update))
-        .add_state(new State("fall").set_update(on_fall_update));
+        .add_state(new State("idle").set_create(on_idle_create).set_update(on_idle_update))
+        .add_state(new State("walk").set_create(on_walk_create).set_update(on_walk_update))
+        .add_state(new State("jump").set_create(on_jump_create).set_update(on_jump_update))
+        .add_state(new State("fall").set_create(on_fall_create).set_update(on_fall_update));
 #endregion
 
 #region Hooks

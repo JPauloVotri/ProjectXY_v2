@@ -55,6 +55,14 @@ if (is_grounded()) {
     }
 }
 
+var _previous_x = x;
+
 move();
 
+if (state_machine.is_state("walk")) {
+    walk_distance += abs(x - _previous_x);
+}
+
 try_fire();
+
+update_appearance();

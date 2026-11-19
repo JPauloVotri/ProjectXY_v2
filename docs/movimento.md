@@ -135,7 +135,7 @@ Com esses valores e o pulo alto desligado, o pulo sobe **46px** — a fórmula c
 
 ### Estados (`obj_player`)
 
-O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()` e tenta disparar. A regra horizontal, o impulso do pulo e o corte moram nos estados.
+O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()`, acumula a distância horizontal da caminhada, tenta disparar e chama `update_appearance()`. A regra horizontal, o impulso do pulo e o corte moram nos estados.
 
 | Estado | Entra quando | Comportamento | Sai para |
 |---|---|---|---|
@@ -153,7 +153,32 @@ O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade te
 
 Cada `update` segue a ordem **comportamento → chão → pulo → transição**, que reproduz a ordem do `Step` anterior à máquina.
 
-`idle` e `walk` aplicam a mesma regra hoje e existem separados para receber animação. A ramificação de pouso do `fall` aplica a regra do chão e chama `try_jump()` **antes** de trocar para `idle`/`walk`: é isso que faz o pulo sair no próprio frame do pouso, com a velocidade horizontal do chão. No `fall` no ar, `apply_air_movement()` roda antes de `try_air_jump()`; se o segundo pulo dispara, o estado volta para `jump`.
+`idle` e `walk` aplicam a mesma regra e existem separados para a animação; cada estado fixa a pose de entrada no `create` e `update_appearance()` cuida do que muda por frame. A ramificação de pouso do `fall` aplica a regra do chão e chama `try_jump()` **antes** de trocar para `idle`/`walk`: é isso que faz o pulo sair no próprio frame do pouso, com a velocidade horizontal do chão. No `fall` no ar, `apply_air_movement()` roda antes de `try_air_jump()`; se o segundo pulo dispara, o estado volta para `jump`.
+
+### Animação (`obj_player`)
+
+O jogador é desenhado em duas camadas, ambas viradas para a direita e espelhadas por `image_xscale`. `spr_player` continua sendo só a máscara de colisão; o Draw do player não a desenha.
+
+| Sprite | Quadros | Origem | Papel |
+|---|---|---|---|
+| `spr_player_legs_idle` | 2 | `(8, 8)` | 0 parado; 1 parado mirando reto para cima |
+| `spr_player_legs_walk` | 8 | `(8, 8)` | 0–7 caminhada; 4 pulo; 6 queda |
+| `spr_player_torso` | 4 | `(8, 9)` | 0 horizontal; 1 diagonal cima; 2 reta cima; 3 diagonal baixo |
+
+As três têm 16×16 e são desenhadas no mesmo `(x, y)`; as origens fazem o encaixe. O torso é desenhado depois das pernas.
+
+**Caminhada por distância.** `walk_distance` acumula o `x` efetivo do `move()` e o quadro é `floor(walk_distance / WALK_FRAME_DISTANCE) % WALK_FRAME_COUNT`. Com `WALK_FRAME_DISTANCE = 4`, a animação avança um quadro a cada 4px andados. A passada desenhada mede cerca de 2px por quadro, mas 4 foi escolhido por leitura de movimento; o valor é o ajuste de cadência, e a velocidade da água e da rampa acompanha a distância real.
+
+| Constante | Valor | Efeito |
+|---|---|---|
+| `WALK_FRAME_COUNT` | `8` | quadros do ciclo de caminhada |
+| `WALK_FRAME_DISTANCE` | `4` | px percorridos por quadro da caminhada |
+| `WALK_JUMP_FRAME` | `4` | quadro da caminhada usado no pulo |
+| `WALK_FALL_FRAME` | `6` | quadro da caminhada usado na queda |
+
+**Torso.** `WALK_TORSO_BOB_Y` desce o torso 1px nos quadros 2 e 6; parado, `IDLE_TORSO_OFFSET_Y` também desce 1px. Pulo e queda usam o valor da tabela no quadro reaproveitado (4 → 0, 6 → 1). O deslocamento é só de desenho: não altera a máscara, a boca nem a posição.
+
+**Estados.** Cada estado fixa a pose de entrada no `create`: `idle` escolhe a sprite de pernas parada e o quadro conforme a mira; `walk` zera o ciclo; `jump` e `fall` fixam os quadros 4 e 6. `update_appearance()` roda depois de `state_machine.update()`, avança a caminhada e escolhe o quadro do torso pela mira. O quadro do torso não fica no `create` porque a mira muda sem troca de estado.
 
 ### Pulo e ar
 
@@ -218,7 +243,7 @@ Para testar existe um toggle temporário na tecla **I**, marcado no código com 
 
 A direção vem do **input**, não da velocidade: o Step chama `set_facing(_input)` sempre que `_input != 0`. Parado, ou sem direção no ar, o último lado é preservado. Apertar as duas direções ao mesmo tempo dá `_input == 0` e não vira. A mira não muda o `facing`: ela parte dele.
 
-`set_facing` é o único ponto que traduz estado em sprite. Quando existirem sprites separadas por lado, só ele muda — `facing` continua o mesmo, e é ele que a mira consulta para montar a direção do tiro.
+`set_facing` é o único ponto que traduz `facing` em `image_xscale`. O Draw usa esse valor para espelhar as duas partes; `facing` continua o mesmo, e é ele que a mira consulta para montar a direção do tiro.
 
 ### Tiro
 
@@ -237,7 +262,7 @@ O `Step` monta a mira no topo e chama `try_fire()` no fim, depois do `move()`; `
 
 O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não há tiro para trás. Para virar, o jogador precisa andar para o outro lado.
 
-**Boca.** `get_muzzle_position(_direction)` cruza o raio da mira com o bbox contínuo e devolve o ponto na borda. Com o corpo de 8×16, os tiros saem de `x ± 4` na horizontal, `y ± 8` na vertical e `(facing * 4, ±4)` nas diagonais.
+**Boca.** `get_muzzle_position(_direction)` cruza o raio da mira com o bbox contínuo e devolve o ponto na borda. Com a máscara de 6×16, os tiros saem de `x ± 3` na horizontal, `y ± 8` na vertical e `(facing * 3, ±3)` nas diagonais.
 
 **Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O primeiro tiro sai no frame do aperto.
 
@@ -305,10 +330,14 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **A penalidade da rampa precisa do `clamp`.** Sem ele, a penalidade chega a 1px e o `move()` a interpreta como passo válido, empurrando o ator 1px para trás quando a tecla é solta.
 - **A penalidade é por degrau vencido.** Numa rampa mais suave, com menos step-ups por frame, o desconto médio cai proporcionalmente — o fator nominal só vale para 45°.
 - **Hooks são métodos por instância.** Cada ator instancia as próprias funções no Create; para muitos atores com o mesmo comportamento, a alternativa seria um constructor.
-- **A inversão do sprite depende da origem.** `spr_player` usa origem middle-center, então `image_xscale = -1` mantém o bbox em `[-4, 3]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
+- **A caminhada é por distância, não por tempo.** `walk_distance` só cresce com o `x` efetivo do `move()`; empurrar parede congela a animação e a água ou a rampa ajustam a cadência.
+- **O bob do torso é só de desenho.** `torso_offset_y` entra no torso; pernas, máscara e boca não se deslocam.
+- **Pulo e queda reusam quadros da caminhada.** Os índices 4 e 6 precisam acompanhar a arte.
+- **A pose de entrada fica no `create` do estado.** O `update` do estado novo não roda no frame da troca; o que precisa valer na hora vai no `create`, e o que muda por frame vai em `update_appearance()`.
+- **A inversão do sprite depende da origem.** `spr_player` usa origem `(3, 8)`, então `image_xscale = -1` mantém o bbox em `[-3, 2]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 - **O espaçamento da escada é o que exige o power-up.** Quatro degraus de 40px, contra 23px de pulo na água e 46px fora dela — 33px e 66px com o pulo alto. Sem `ignores_friction`, o pulo alto sozinho (33px) e o pulo duplo base (31px) ficam abaixo dos 40px; com o primeiro pulo alto, o duplo chega a 45px e passa. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
 - **O segundo pulo é um só e só na descida.** `air_jump_used` zera no chão e na coleta; apertar durante a subida só fica no buffer de 5 frames. Na velocidade terminal o segundo pulo não dispara.
-- **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 8 px.
+- **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 6 px.
 - **Nenhuma base se posiciona.** `obj_pickup` e `obj_power_up` não têm sprite: a instância da room é sempre um tipo com sprite própria, e uma instância da base estoura na checagem de colisão do `Step`.
 - **O tiro não sai para trás.** A mira usa `facing` ou `0` no eixo x; para virar, o jogador precisa andar para o outro lado.
 - **A diagonal lembrada sobrevive à soltura da mira.** `aim_vertical` só muda com ↑/↓ enquanto a mira está segurada ou o jogador anda; o tiro vertical não a altera.
