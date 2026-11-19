@@ -256,11 +256,14 @@ O `Step` monta a mira no topo e chama `try_fire()` no fim, depois do `move()`; `
 | mira segurada, sem ↑/↓ | `(facing, aim_vertical)` |
 | mira segurada + ↑ ou ↓ | diagonal escolhida; atualiza `aim_vertical` |
 | sem mira, andando + ↑ ou ↓ | `(facing, ±1)`; atualiza `aim_vertical` |
-| sem mira, parado + ↑ ou ↓ | `(0, ±1)` |
+| sem mira, parado + ↑ | `(0, -1)` |
+| sem mira, parado + ↓ | mantém `aim_direction` e `aim_vertical` anteriores |
 | sem mira, sem ↑/↓ | `(facing, 0)` |
 | ↑ e ↓ juntos | cancela: diagonal lembrada com a mira, horizontal sem ela |
 
 O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não há tiro para trás. Para virar, o jogador precisa andar para o outro lado.
+
+↓ sem mira, parado e sem input horizontal não altera a mira: o tiro continua na última direção. Para mirar para baixo é preciso segurar a mira ou estar andando, e nesse caso a mira é sempre diagonal.
 
 **Boca.** `get_muzzle_position(_direction)` cruza o raio da mira com o bbox contínuo e devolve o ponto na borda. Com a máscara de 6×16, os tiros saem de `x ± 3` na horizontal, `y ± 8` na vertical e `(facing * 3, ±3)` nas diagonais.
 
@@ -340,6 +343,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 6 px.
 - **Nenhuma base se posiciona.** `obj_pickup` e `obj_power_up` não têm sprite: a instância da room é sempre um tipo com sprite própria, e uma instância da base estoura na checagem de colisão do `Step`.
 - **O tiro não sai para trás.** A mira usa `facing` ou `0` no eixo x; para virar, o jogador precisa andar para o outro lado.
+- **A mira reta para baixo não existe.** ↓ sem mira e parado preserva a mira anterior; com a mira segurada ou andando, ↓ dá diagonal baixo.
 - **A diagonal lembrada sobrevive à soltura da mira.** `aim_vertical` só muda com ↑/↓ enquanto a mira está segurada ou o jogador anda; o tiro vertical não a altera.
 - **O projétil expira pela câmera, não por tempo ou alcance.** Ele some `64px` fora da view; se a câmera se afastar, ele morre antes de sair da tela.
 - **O tiro é consumido em qualquer inimigo que encosta.** O `hit` vem do contato, não do dano: inimigo invencível ou com limiar acima do `BULLET_DAMAGE` engole o projétil igual.
