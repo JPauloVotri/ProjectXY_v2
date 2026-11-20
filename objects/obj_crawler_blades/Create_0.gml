@@ -9,6 +9,9 @@
     flashing = false;
 
     image_speed = 0;
+
+    /// @desc Desenhado pelo crawler; a instância existe só para guardar a animação.
+    visible = false;
 #endregion
 
 #region Animação

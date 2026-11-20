@@ -25,7 +25,7 @@ event_inherited();
 
     /// @desc Cria o efeito padrão da morte; filhos sobrescrevem para trocar ou desligar.
     on_death_effect = function() {
-        instance_create_layer(x, y, self.layer, obj_explosion_enemy);
+        instance_create_layer(x, y, LAYER_EFFECTS, obj_explosion_enemy);
     }
 #endregion
 

@@ -20,7 +20,7 @@ if (hit || is_beyond_camera()) {
         instance_create_layer(
             contact_position.x,
             contact_position.y,
-            self.layer,
+            LAYER_EFFECTS,
             obj_explosion_bullet
         );
     }

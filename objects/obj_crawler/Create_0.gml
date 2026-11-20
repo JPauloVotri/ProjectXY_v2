@@ -306,6 +306,5 @@ event_inherited();
 
     /// @type {Id.Instance.obj_crawler_blades}
     blades = instance_create_layer(x, y, self.layer, obj_crawler_blades);
-    blades.depth = depth - 1;
     blades.parent = self;
 #endregion

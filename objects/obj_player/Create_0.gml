@@ -70,7 +70,7 @@ event_inherited();
         var _muzzle = new Vector2(x + _offset.x * facing, y + _offset.y);
 
         /// @type {Id.Instance.obj_bullet}
-        var _bullet = instance_create_layer(_muzzle.x, _muzzle.y, "Instances", obj_bullet);
+        var _bullet = instance_create_layer(_muzzle.x, _muzzle.y, LAYER_PROJECTILES, obj_bullet);
 
         _bullet.launch(aim_direction);
         fire_cooldown = FIRE_COOLDOWN;

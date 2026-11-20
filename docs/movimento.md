@@ -280,7 +280,7 @@ O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não
 
 O tiro nasce no centro desse deslocamento. O clarão é desenhado pelo próprio player, depois do torso, por `MUZZLE_FLASH_TIME` frames; usa `image_xscale` para espelhar e `muzzle_flash_yscale = -1` na diagonal para baixo.
 
-**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O offset e o quadro do clarão ficam gravados no disparo; a mira pode mudar sem deslocar o clarão já aceso. O primeiro tiro sai no frame do aperto.
+**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Projectiles` (`LAYER_PROJECTILES`), chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O offset e o quadro do clarão ficam gravados no disparo; a mira pode mudar sem deslocar o clarão já aceso. O primeiro tiro sai no frame do aperto.
 
 **Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 4×4 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked`/`on_y_blocked` marcam `hit` e guardam o passo de contato; `on_x_moved`/`on_y_moved` procuram inimigo a cada passo de 1 px. O Step destrói depois do `move()`, nunca dentro do laço.
 
@@ -290,7 +290,7 @@ Depois do `move()`, o Step procura `obj_enemy` na posição final: achando, cham
 
 O tiro morre em `obj_solid` e em `obj_enemy`; sem alcance fixo, morre também quando o centro passa `DESPAWN_MARGIN = 64` px para fora da view de `view_camera[0]` em qualquer lado. Se a câmera se afastar dele, ele também some.
 
-Morrendo por colisão, solta `obj_explosion_bullet` em `contact_position`, na própria camada; expirando pela câmera, não solta nada.
+Morrendo por colisão, solta `obj_explosion_bullet` em `contact_position`, na camada `Effects` (`LAYER_EFFECTS`); expirando pela câmera, não solta nada.
 
 | Constante | Valor | Efeito |
 |---|---|---|
