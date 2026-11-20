@@ -19,7 +19,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 |---|---|
 | `obj_actor` | base sem sprite: guarda estado, `move()` e os hooks padrão |
 | `obj_player` | herda de `obj_actor`; define as constantes e sobrescreve os hooks de x |
-| `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks, fere o inimigo que encontra e desenha o rastro de três frames |
+| `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks, fere o inimigo que encontra, explode no primeiro contato e desenha o rastro de três frames a partir da boca |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
 | `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
 | `obj_power_up` | marcador sem sprite: todo tipo de power-up herda dele |
@@ -279,19 +279,22 @@ O tiro nasce no centro desse deslocamento. O clarão é desenhado pelo próprio 
 
 **Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O offset e o quadro do clarão ficam gravados no disparo; a mira pode mudar sem deslocar o clarão já aceso. O primeiro tiro sai no frame do aperto.
 
-**Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 4×4 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked` e `on_y_blocked` só marcam `hit`; o Step destrói depois do `move()`, nunca dentro do laço.
+**Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 4×4 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked`/`on_y_blocked` marcam `hit` e guardam o passo de contato; `on_x_moved`/`on_y_moved` procuram inimigo a cada passo de 1 px. O Step destrói depois do `move()`, nunca dentro do laço.
 
 Depois do `move()`, o Step procura `obj_enemy` na posição final: achando, chama `take_damage(BULLET_DAMAGE)` e marca `hit`. A procura roda mesmo quando o passo foi bloqueado pelo cenário — é o que permite ferir o crawler colado na parede, onde o tiro para a 1 px dela. Quem decide se o dano passa é o inimigo: vida, invencibilidade e dano mínimo moram no `obj_enemy`.
 
+**Impacto.** `contact_position` guarda o centro do tiro no primeiro passo de 1 px que encostou outra instância, já deslocado por `CONTACT_OFFSET = 1` no eixo do passo para cair na superfície do alvo. Em sólido, o contato é o passo tentado que seria bloqueado; em inimigo, é o primeiro passo efetivado em que `instance_place` acha um inimigo com `current_health > 0`. Se o tiro já estava sobreposto sem ter se movido, o fallback usa a posição final. A explosão nasce nesse ponto; expirando pela câmera, não há explosão.
+
 O tiro morre em `obj_solid` e em `obj_enemy`; sem alcance fixo, morre também quando o centro passa `DESPAWN_MARGIN = 64` px para fora da view de `view_camera[0]` em qualquer lado. Se a câmera se afastar dele, ele também some.
 
-Morrendo por colisão, solta `obj_explosion_bullet` na posição final, na própria camada; expirando pela câmera, não solta nada.
+Morrendo por colisão, solta `obj_explosion_bullet` em `contact_position`, na própria camada; expirando pela câmera, não solta nada.
 
 | Constante | Valor | Efeito |
 |---|---|---|
 | `BULLET_SPEED` | `3` | px/frame ao longo da direção |
 | `DESPAWN_MARGIN` | `64` | px além da view em que o tiro some |
 | `BULLET_DAMAGE` | `1` | dano que o tiro desconta do inimigo |
+| `CONTACT_OFFSET` | `1` | px do primeiro passo de contato até a superfície do alvo |
 | `TRAIL_LENGTH` | frames do sprite (`3`) | quantidade de círculos do rastro |
 | `TRAIL_SPACING` | largura do frame − 2 (`4`) | distância entre os centros; com o sprite 6×6 sobram 2 px de sobreposição |
 | `TRAIL_MUZZLE_CLEARANCE` | `6` | px à frente da boca para um ponto do rastro aparecer |
@@ -362,6 +365,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **A onda do rastro é só desenho.** O deslocamento perpendicular não entra na posição nem na máscara do projétil.
 - **O rastro só começa à frente da boca.** `spawn_position` é capturado no Create e `TRAIL_MUZZLE_CLEARANCE` corta os pontos que ainda estariam sobre o clarão; mexer no sprite ou na velocidade do tiro pede reavaliar esse valor.
 - **O clarão não segue a mira.** Offset, quadro e espelhamento vertical são gravados no disparo; mudar a mira no meio do clarão não o reposiciona.
+- **A explosão usa o primeiro contato do Step.** `contact_position` vem dos hooks de 1 px, não da posição final; o dano continua na posição final, mas a animação nasce na superfície.
 
 ## Exemplos
 
