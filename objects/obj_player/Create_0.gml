@@ -240,6 +240,7 @@ event_inherited();
     LEGS_IDLE_UP = 1;
     WALK_JUMP_FRAME = 4;
     WALK_FALL_FRAME = 6;
+    WALK_FALL_TERMINAL_FRAME = 3;
 
     TORSO_HORIZONTAL = 0;
     TORSO_DIAGONAL_UP = 1;
@@ -310,6 +311,11 @@ event_inherited();
         } else if (state_machine.is_state("idle")) {
             legs_frame = (aim_direction.x == 0 && aim_direction.y < 0)
                 ? LEGS_IDLE_UP : LEGS_IDLE;
+        } else if (state_machine.is_state("fall")) {
+            var _terminal_speed = TERMINAL_SPEED * physics_factor;
+
+            legs_frame = velocity.y >= _terminal_speed
+                ? WALK_FALL_TERMINAL_FRAME : WALK_FALL_FRAME;
         }
 
         torso_frame = get_torso_frame();

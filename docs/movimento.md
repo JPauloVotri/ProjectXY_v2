@@ -163,7 +163,7 @@ O jogador é desenhado em duas camadas, ambas viradas para a direita e espelhada
 | Sprite | Quadros | Origem | Papel |
 |---|---|---|---|
 | `spr_player_legs_idle` | 2 | `(8, 8)` | 0 parado; 1 parado mirando reto para cima |
-| `spr_player_legs_walk` | 8 | `(8, 8)` | 0–7 caminhada; 4 pulo; 6 queda |
+| `spr_player_legs_walk` | 8 | `(8, 8)` | 0–7 caminhada; 4 pulo; 6 queda; 3 queda terminal |
 | `spr_player_torso` | 4 | `(8, 9)` | 0 horizontal; 1 diagonal cima; 2 reta cima; 3 diagonal baixo |
 
 As três têm 16×16 e são desenhadas no mesmo `(x, y)`; as origens fazem o encaixe. O torso é desenhado depois das pernas.
@@ -176,10 +176,11 @@ As três têm 16×16 e são desenhadas no mesmo `(x, y)`; as origens fazem o enc
 | `WALK_FRAME_DISTANCE` | `4` | px percorridos por quadro da caminhada |
 | `WALK_JUMP_FRAME` | `4` | quadro da caminhada usado no pulo |
 | `WALK_FALL_FRAME` | `6` | quadro da caminhada usado na queda |
+| `WALK_FALL_TERMINAL_FRAME` | `3` | quadro usado na queda em velocidade terminal |
 
-**Torso.** `WALK_TORSO_BOB_Y` desce o torso 1px nos quadros 2 e 6; parado, `IDLE_TORSO_OFFSET_Y` também desce 1px. Pulo e queda usam o valor da tabela no quadro reaproveitado (4 → 0, 6 → 1). O deslocamento é só de desenho: não altera a máscara, a boca nem a posição.
+**Torso.** `WALK_TORSO_BOB_Y` desce o torso 1px nos quadros 2 e 6; parado, `IDLE_TORSO_OFFSET_Y` também desce 1px. Pulo e queda usam o valor da tabela no quadro de entrada (4 → 0, 6 → 1); a troca para o quadro 3 no terminal muda só as pernas, sem mexer no offset do torso. O deslocamento é só de desenho: não altera a máscara, a boca nem a posição.
 
-**Estados.** Cada estado fixa a pose de entrada no `create`: `idle` escolhe a sprite de pernas parada e o quadro conforme a mira; `walk` zera o ciclo; `jump` e `fall` fixam os quadros 4 e 6. `update_appearance()` roda depois de `state_machine.update()`, avança a caminhada e escolhe o quadro do torso pela mira. O quadro do torso não fica no `create` porque a mira muda sem troca de estado.
+**Estados.** Cada estado fixa a pose de entrada no `create`: `idle` escolhe a sprite de pernas parada e o quadro conforme a mira; `walk` zera o ciclo; `jump` e `fall` fixam os quadros 4 e 6. `update_appearance()` roda depois de `state_machine.update()`, avança a caminhada, troca a queda para o quadro 3 quando `velocity.y >= TERMINAL_SPEED * physics_factor` e escolhe o quadro do torso pela mira. O quadro do torso não fica no `create` porque a mira muda sem troca de estado.
 
 ### Pulo e ar
 
@@ -194,6 +195,8 @@ Segurar o botão sobe os 37px do pulo base. Soltar durante a subida multiplica o
 | segurando | 37px | 60 |
 
 A tabela vale com `high_jump` desligado.
+
+Um pulo base cai por cerca de 29 frames e não alcança a velocidade terminal: o quadro 3 aparece em quedas longas. A partir do repouso, o terminal chega em cerca de 36 frames tanto no ar quanto na água, porque gravidade e teto escalam pelo mesmo fator.
 
 No ar a velocidade horizontal segue três regras. O alvo delas é
 `_air_speed = MOVEMENT_SPEED * AIR_FACTOR * physics_factor`, que com os valores atuais vale **0,5**
@@ -349,7 +352,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **Hooks são métodos por instância.** Cada ator instancia as próprias funções no Create; para muitos atores com o mesmo comportamento, a alternativa seria um constructor.
 - **A caminhada é por distância, não por tempo.** `walk_distance` só cresce com o `x` efetivo do `move()`; empurrar parede congela a animação e a água ou a rampa ajustam a cadência.
 - **O bob do torso é só de desenho.** `torso_offset_y` entra no torso; pernas, máscara e boca não se deslocam.
-- **Pulo e queda reusam quadros da caminhada.** Os índices 4 e 6 precisam acompanhar a arte.
+- **Pulo e queda reusam quadros da caminhada.** Os índices 3, 4 e 6 precisam acompanhar a arte.
 - **A pose de entrada fica no `create` do estado.** O `update` do estado novo não roda no frame da troca; o que precisa valer na hora vai no `create`, e o que muda por frame vai em `update_appearance()`.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem `(3, 8)`, então `image_xscale = -1` mantém o bbox em `[-3, 2]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 - **O espaçamento da escada é o que exige o power-up.** Na água, a escada da direita sobe 24px e depois 32px, contra 18px de pulo base e 25px do duplo base; o pulo alto sozinho (34px) passa, e com o duplo chega a 47px. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
