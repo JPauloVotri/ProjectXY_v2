@@ -100,9 +100,11 @@ Transições a cada `update()`:
 | `aim_up` | `W`, seta para cima | D-pad para cima |
 | `aim_down` | `S`, seta para baixo | D-pad para baixo |
 | `restart` | F5 | — |
+| `pause` | `ESC` | Start/Options |
 
 - `J` atende quem anda com `A`/`D`; `C` atende quem anda com as setas.
 - `aim` é um modificador, não uma direção: o player escolhe a diagonal com `aim_up`/`aim_down` enquanto a mira está segurada e, sem ela, lê os mesmos botões como tiro vertical. O analógico direito não é usado por nenhum binding hoje.
+- `pause` é a ação de pause; enquanto o menu não existe, chama `game_end()` no primeiro frame do aperto.
 
 ## Desvios do original
 
@@ -125,6 +127,7 @@ O sistema parte do recurso de input do gm48.net (Mimpy, 2021). As diferenças ab
 - **O analógico não tem histerese.** Uma direção liga acima da `deadzone` e desliga logo abaixo, então há chacoalho exatamente no limite.
 - **`buffer = 0` é válido, mas a janela de liberação dura um frame.** Bom para menu, apertado para plataforma.
 - **Reiniciar espera a tecla soltar.** `game_restart()` recria o `obj_game`, e a instância nova veria o F5 ainda pressionado como um aperto novo: com `check_pressed` a partida reiniciaria em laço enquanto a tecla estivesse segurada. O `restart` lê `check_released`.
+- **Fechar não espera soltar.** `pause` usa `check_pressed`; `game_end()` não recria o `obj_game`, então não existe o laço do `restart`.
 
 ## Exemplos
 
