@@ -1,4 +1,12 @@
-for (var _i = TRAIL_LENGTH - 1; _i >= 0; _i--) {
+var _traveled = (x - spawn_position.x) * travel_direction.x
+    + (y - spawn_position.y) * travel_direction.y;
+var _start = clamp(
+    floor((_traveled - TRAIL_MUZZLE_CLEARANCE) / TRAIL_SPACING),
+    0,
+    TRAIL_LENGTH - 1
+);
+
+for (var _i = _start; _i >= 0; _i--) {
     var _wave = 0;
 
     if (_i > 0) {

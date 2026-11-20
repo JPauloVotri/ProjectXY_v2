@@ -294,11 +294,12 @@ Morrendo por colisão, solta `obj_explosion_bullet` na posição final, na próp
 | `BULLET_DAMAGE` | `1` | dano que o tiro desconta do inimigo |
 | `TRAIL_LENGTH` | frames do sprite (`3`) | quantidade de círculos do rastro |
 | `TRAIL_SPACING` | largura do frame − 2 (`4`) | distância entre os centros; com o sprite 6×6 sobram 2 px de sobreposição |
+| `TRAIL_MUZZLE_CLEARANCE` | `6` | px à frente da boca para um ponto do rastro aparecer |
 | `TRAIL_WAVE_AMPLITUDE` | `1` | px de ondulação perpendicular ao trajeto |
 | `TRAIL_WAVE_SPEED` | `22.5` | graus por frame; um ciclo a cada 16 frames |
 | `TRAIL_WAVE_PHASE` | `180` | defasagem entre os círculos do rastro, em graus |
 
-**Desenho.** O Draw vai do frame mais atrás para o mais à frente, então a cabeça fica por cima. Só a cabeça (frame 0) segue o caminho exato; os outros recebem `sin` da fase, com deslocamento perpendicular a `travel_direction` e posições arredondadas para pixel inteiro. A onda é só de desenho: não altera a posição, a colisão nem o despawn.
+**Desenho.** O Draw começa no ponto mais distante que já passou `TRAIL_MUZZLE_CLEARANCE` px à frente de `spawn_position` e vai até a cabeça; assim o rastro cresce a partir da boca e não aparece entre o player e o clarão. Só a cabeça (frame 0) segue o caminho exato; os outros recebem `sin` da fase, com deslocamento perpendicular a `travel_direction` e posições arredondadas para pixel inteiro. A onda é só de desenho: não altera a posição, a colisão nem o despawn.
 
 O `obj_bullet` não é posicionado na room; quem cria é o `try_fire()` do player.
 
@@ -359,6 +360,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O tiro é consumido em qualquer inimigo que encosta.** O `hit` vem do contato, não do dano: inimigo invencível ou com limiar acima do `BULLET_DAMAGE` engole o projétil igual.
 - **Não destrua o projétil dentro do hook.** O laço do `move()` continua depois do hook; o tiro marca `hit` e só destrói no fim do Step.
 - **A onda do rastro é só desenho.** O deslocamento perpendicular não entra na posição nem na máscara do projétil.
+- **O rastro só começa à frente da boca.** `spawn_position` é capturado no Create e `TRAIL_MUZZLE_CLEARANCE` corta os pontos que ainda estariam sobre o clarão; mexer no sprite ou na velocidade do tiro pede reavaliar esse valor.
 - **O clarão não segue a mira.** Offset, quadro e espelhamento vertical são gravados no disparo; mudar a mira no meio do clarão não o reposiciona.
 
 ## Exemplos

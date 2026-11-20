@@ -5,6 +5,9 @@ event_inherited();
     TRAIL_LENGTH = sprite_get_number(sprite_index);
     TRAIL_SPACING = max(sprite_get_width(sprite_index) - 2, 1);
 
+    /// @desc Distância mínima à frente da boca, em px, para um ponto do rastro aparecer.
+    TRAIL_MUZZLE_CLEARANCE = 6;
+
     /// @desc Amplitude da ondulação do rastro, em px.
     TRAIL_WAVE_AMPLITUDE = 1;
 
@@ -15,6 +18,9 @@ event_inherited();
     TRAIL_WAVE_PHASE = 180;
 
     wave_time = 0;
+
+    /// @desc Posição onde o tiro nasceu; o rastro só aparece à frente dela.
+    spawn_position = new Vector2(x, y);
 #endregion
 
 #region Movimento
