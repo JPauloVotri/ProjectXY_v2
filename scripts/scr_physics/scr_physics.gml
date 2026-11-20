@@ -1,3 +1,3 @@
-#macro GRAVITY .1
+#macro GRAVITY 1/12
 #macro TERMINAL_SPEED 3
 #macro WATER_FACTOR .5

@@ -7,9 +7,9 @@ enum FACING {
 event_inherited();
 
 #region Constantes
-    JUMP_SPEED = 3;
+    JUMP_SPEED = 2.45;
     JUMP_CUT = .5;
-    HIGH_JUMP_FACTOR = 1.2;
+    HIGH_JUMP_FACTOR = 1.37;
     DOUBLE_JUMP_FACTOR = .6;
     MOVEMENT_SPEED = 1;
     AIR_FACTOR = .5;

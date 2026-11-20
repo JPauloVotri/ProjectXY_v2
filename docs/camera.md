@@ -45,7 +45,7 @@ O offset é a **integral da velocidade**, limitada por frame:
 
 - Correndo a 1 px/frame, cresce 1 por frame.
 - Caindo a 3 px/frame, a taxa corta para 1 — sem isso, o impulso do pulo (que salta de `0`
-  para `-3` de uma vez) moveria a câmera 3px num frame só.
+  para `-2.45` de uma vez) moveria a câmera mais de 2px num frame só.
 - Parado, o offset **não volta**: a câmera fica onde parou até o jogador se mover para o outro
   lado.
 - Perto do teto, a taxa cai proporcionalmente ao que falta (`__offset_step`), então o

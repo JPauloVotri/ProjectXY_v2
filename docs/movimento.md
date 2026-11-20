@@ -60,7 +60,7 @@ Três macros globais. Por serem macros, não há ajuste por instância nem em te
 
 | Macro | Valor | Efeito |
 |---|---|---|
-| `GRAVITY` | `.1` | aceleração vertical por frame |
+| `GRAVITY` | `1/12` | aceleração vertical por frame |
 | `TERMINAL_SPEED` | `3` | teto da queda |
 | `WATER_FACTOR` | `.5` | escala da física dentro da água |
 
@@ -75,12 +75,12 @@ physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
 
 | Grandeza | Fora | Na água |
 |---|---|---|
-| Gravidade | `.1` | `.05` |
+| Gravidade | `1/12` | `1/24` |
 | Queda máxima | `3` | `1.5` |
 | Velocidade no chão | `1` | `.5` |
 | Velocidade no ar | `.5` | `.25` |
-| Impulso do pulo | `3` | `1.5` |
-| Impulso do pulo alto | `3.6` | `1.8` |
+| Impulso do pulo | `2.45` | `1.225` |
+| Impulso do pulo alto | `3.36` | `1.68` |
 
 Como a regra horizontal é a mesma nos dois meios, a inércia continua valendo dentro da água: entrar correndo conserva a velocidade enquanto a direção é mantida, e decai para o teto ao soltar ou inverter.
 
@@ -121,9 +121,9 @@ A base declara `on_collect` com `return false`, então um tipo que esqueça a so
 
 | Constante | Valor | Efeito |
 |---|---|---|
-| `JUMP_SPEED` | `3` | impulso do pulo, aplicado como `-JUMP_SPEED` |
+| `JUMP_SPEED` | `2.45` | impulso do pulo, aplicado como `-JUMP_SPEED` |
 | `JUMP_CUT` | `.5` | fração da subida mantida ao soltar o pulo |
-| `HIGH_JUMP_FACTOR` | `1.2` | multiplicador do impulso enquanto `high_jump` estiver ligado |
+| `HIGH_JUMP_FACTOR` | `1.37` | multiplicador do impulso enquanto `high_jump` estiver ligado |
 | `DOUBLE_JUMP_FACTOR` | `.6` | fração do impulso atual aplicada ao segundo pulo |
 | `MOVEMENT_SPEED` | `1` | velocidade horizontal base; no chão vale inteira |
 | `AIR_FACTOR` | `.5` | fração da `MOVEMENT_SPEED` aplicada no ar |
@@ -131,7 +131,7 @@ A base declara `on_collect` com `return false`, então um tipo que esqueça a so
 | `SLOPE_MAX_PENALTY` | `.99` | teto da penalidade acumulada na rampa |
 | `FIRE_COOLDOWN` | `20` | frames entre tiros; também é a espera do disparo automático |
 
-Com esses valores e o pulo alto desligado, o pulo sobe **46px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 45, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 61.
+Com esses valores e o pulo alto desligado, o pulo sobe **37px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 36, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 60.
 
 ### Estados (`obj_player`)
 
@@ -182,15 +182,15 @@ As três têm 16×16 e são desenhadas no mesmo `(x, y)`; as origens fazem o enc
 
 ### Pulo e ar
 
-Segurar o botão sobe os 46px do pulo base. Soltar durante a subida multiplica o que resta por `JUMP_CUT`, então o ápice depende do tempo de aperto:
+Segurar o botão sobe os 37px do pulo base. Soltar durante a subida multiplica o que resta por `JUMP_CUT`, então o ápice depende do tempo de aperto:
 
 | Solta no frame | Altura | Tempo de ar |
 |---|---|---|
-| 2 (toque) | 14,2px | 33 |
-| 5 | 20,5px | 38 |
-| 11 | 31,0px | 46 |
-| 16 | 37,7px | 51 |
-| segurando | 46,5px | 61 |
+| 2 (toque) | 11px | 33 |
+| 5 | 16px | 38 |
+| 11 | 25px | 45 |
+| 16 | 30px | 50 |
+| segurando | 37px | 60 |
 
 A tabela vale com `high_jump` desligado.
 
@@ -214,7 +214,7 @@ No pulo do chão, `high_jump` multiplica o impulso antes de `physics_factor`:
 velocity.y = -get_jump_speed() * physics_factor;
 ```
 
-Fora da água o impulso passa de `3` para `3.6` e o pulo sobe **66px**, com 74 frames de ar. Dentro da água, com a física escalada (sem `ignores_friction`), passa de `1.5` para `1.8` e sobe **33px**. O `JUMP_CUT` continua valendo sobre o que resta da subida. Quem liga a flag é `grant_high_jump()`, chamado pelo pickup; o contrato está em Pickups.
+Fora da água o impulso passa de `2.45` para `3.36` e o pulo sobe **69px**, com 82 frames de ar. Dentro da água, com a física escalada (sem `ignores_friction`), passa de `1.225` para `1.68` e sobe **34px**. O `JUMP_CUT` continua valendo sobre o que resta da subida. Quem liga a flag é `grant_high_jump()`, chamado pelo pickup; o contrato está em Pickups.
 
 Para testar existe um toggle temporário na tecla **O**, marcado no código com `// TODO: remover depois`.
 
@@ -224,7 +224,7 @@ Para testar existe um toggle temporário na tecla **O**, marcado no código com 
 
 O pulo só dispara no estado `fall` (`velocity.y >= 0`) e não dispara na velocidade terminal (`velocity.y >= TERMINAL_SPEED * physics_factor`). Apertar durante a subida não dispara na hora, mas o buffer de 5 frames pode disparar quando o `fall` começa. Ele consome o buffer, aplica `get_jump_speed() * DOUBLE_JUMP_FACTOR * physics_factor`, marca `air_jump_used` e volta para `jump`; o `JUMP_CUT` continua valendo. Pegar o pickup no ar libera o pulo na hora.
 
-Com `DOUBLE_JUMP_FACTOR = .6`, o segundo impulso é 60% do pulo atual. A partir do ápice, o total fica em **63px** no pulo base (segundo de 17px) e **91px** com o primeiro pulo alto (segundo de 25px); na água, **31px** e **45px** (segundos de 8px e 12px).
+Com `DOUBLE_JUMP_FACTOR = .6`, o segundo impulso é 60% do pulo atual. A partir do ápice, o total fica em **50px** no pulo base (segundo de 13px) e **94px** com o primeiro pulo alto (segundo de 25px); na água, **25px** e **47px** (segundos de 7px e 13px).
 
 Para testar existe um toggle temporário na tecla **I**, marcado no código com `// TODO: remover depois`.
 
@@ -338,7 +338,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **Pulo e queda reusam quadros da caminhada.** Os índices 4 e 6 precisam acompanhar a arte.
 - **A pose de entrada fica no `create` do estado.** O `update` do estado novo não roda no frame da troca; o que precisa valer na hora vai no `create`, e o que muda por frame vai em `update_appearance()`.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem `(3, 8)`, então `image_xscale = -1` mantém o bbox em `[-3, 2]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
-- **O espaçamento da escada é o que exige o power-up.** Quatro degraus de 40px, contra 23px de pulo na água e 46px fora dela — 33px e 66px com o pulo alto. Sem `ignores_friction`, o pulo alto sozinho (33px) e o pulo duplo base (31px) ficam abaixo dos 40px; com o primeiro pulo alto, o duplo chega a 45px e passa. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
+- **O espaçamento da escada é o que exige o power-up.** Na água, a escada da direita sobe 24px e depois 32px, contra 18px de pulo base e 25px do duplo base; o pulo alto sozinho (34px) passa, e com o duplo chega a 47px. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
 - **O segundo pulo é um só e só na descida.** `air_jump_used` zera no chão e na coleta; apertar durante a subida só fica no buffer de 5 frames. Na velocidade terminal o segundo pulo não dispara.
 - **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 6 px.
 - **Nenhuma base se posiciona.** `obj_pickup` e `obj_power_up` não têm sprite: a instância da room é sempre um tipo com sprite própria, e uma instância da base estoura na checagem de colisão do `Step`.
