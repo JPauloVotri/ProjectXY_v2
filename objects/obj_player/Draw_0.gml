@@ -21,3 +21,17 @@ draw_sprite_ext(
     c_white,
     1
 );
+
+if (muzzle_flash_time > 0) {
+    draw_sprite_ext(
+        spr_muzzle_flash,
+        muzzle_flash_frame,
+        x + muzzle_flash_offset.x,
+        y + muzzle_flash_offset.y,
+        image_xscale,
+        muzzle_flash_yscale,
+        0,
+        c_white,
+        1
+    );
+}

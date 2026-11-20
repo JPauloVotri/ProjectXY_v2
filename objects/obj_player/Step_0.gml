@@ -18,6 +18,7 @@ if (!_ignores_down) {
 }
 
 fire_cooldown = max(fire_cooldown - 1, 0);
+muzzle_flash_time = max(muzzle_flash_time - 1, 0);
 
 // TODO: remover depois — junto com a entrada `debug_swim` do obj_game.
 if (obj_game.debug_swim.check_pressed()) {

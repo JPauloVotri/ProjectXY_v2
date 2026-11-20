@@ -130,6 +130,7 @@ A base declara `on_collect` com `return false`, então um tipo que esqueça a so
 | `SLOPE_STEP_PENALTY` | `1` | px extras cobrados por degrau vencido |
 | `SLOPE_MAX_PENALTY` | `.99` | teto da penalidade acumulada na rampa |
 | `FIRE_COOLDOWN` | `20` | frames entre tiros; também é a espera do disparo automático |
+| `MUZZLE_FLASH_TIME` | `4` | frames em que o clarão do disparo fica visível |
 
 Com esses valores e o pulo alto desligado, o pulo sobe **37px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 36, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 60.
 
@@ -265,9 +266,18 @@ O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não
 
 ↓ sem mira, parado e sem input horizontal não altera a mira: o tiro continua na última direção. Para mirar para baixo é preciso segurar a mira ou estar andando, e nesse caso a mira é sempre diagonal.
 
-**Boca.** `get_muzzle_position(_direction)` cruza o raio da mira com o bbox contínuo e devolve o ponto na borda. Com a máscara de 6×16, os tiros saem de `x ± 3` na horizontal, `y ± 8` na vertical e `(facing * 3, ±3)` nas diagonais.
+**Boca.** `get_muzzle_offset(_direction)` devolve o deslocamento local do centro do clarão, em px, a partir do centro do player. O X é voltado para a frente e multiplicado por `facing`; o Y é para baixo:
 
-**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O primeiro tiro sai no frame do aperto.
+| Mira | Deslocamento | Quadro do clarão |
+|---|---|---|
+| reta para frente | `(+12, 0)` | 0 |
+| reta para cima | `(0, -13)` | 0 |
+| diagonal para cima | `(+8, -7)` | 1 |
+| diagonal para baixo | `(+9, +5)` | 1 |
+
+O tiro nasce no centro desse deslocamento. O clarão é desenhado pelo próprio player, depois do torso, por `MUZZLE_FLASH_TIME` frames; usa `image_xscale` para espelhar e `muzzle_flash_yscale = -1` na diagonal para baixo.
+
+**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Instances`, chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O offset e o quadro do clarão ficam gravados no disparo; a mira pode mudar sem deslocar o clarão já aceso. O primeiro tiro sai no frame do aperto.
 
 **Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 4×4 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked` e `on_y_blocked` só marcam `hit`; o Step destrói depois do `move()`, nunca dentro do laço.
 
@@ -349,6 +359,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O tiro é consumido em qualquer inimigo que encosta.** O `hit` vem do contato, não do dano: inimigo invencível ou com limiar acima do `BULLET_DAMAGE` engole o projétil igual.
 - **Não destrua o projétil dentro do hook.** O laço do `move()` continua depois do hook; o tiro marca `hit` e só destrói no fim do Step.
 - **A onda do rastro é só desenho.** O deslocamento perpendicular não entra na posição nem na máscara do projétil.
+- **O clarão não segue a mira.** Offset, quadro e espelhamento vertical são gravados no disparo; mudar a mira no meio do clarão não o reposiciona.
 
 ## Exemplos
 

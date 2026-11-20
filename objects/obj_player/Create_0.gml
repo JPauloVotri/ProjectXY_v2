@@ -16,6 +16,9 @@ event_inherited();
     SLOPE_STEP_PENALTY = 1;
     SLOPE_MAX_PENALTY = .99;
     FIRE_COOLDOWN = 20;
+
+    /// @desc Frames em que o clarão do disparo fica visível.
+    MUZZLE_FLASH_TIME = 4;
 #endregion
 
 #region Aparência
@@ -41,24 +44,21 @@ event_inherited();
 
     fire_cooldown = 0;
 
-    /// @desc Ponto da borda do corpo na direção da mira, de onde o tiro sai.
+    /// @desc Deslocamento local do centro do clarão, em px, a partir do centro do player.
     /// @param {Struct.Vector2} _direction Direção da mira, horizontal, diagonal ou vertical.
-    /// @return {Struct.Vector2} Ponto na borda do bbox.
-    get_muzzle_position = function(_direction) {
-        var _extent_x = _direction.x > 0 ? bbox_right - x + 1 : x - bbox_left;
-        var _extent_y = _direction.y > 0 ? bbox_bottom - y + 1 : y - bbox_top;
-        var _distance = infinity;
+    /// @return {Struct.Vector2} X para a frente, sempre positivo; Y para baixo.
+    get_muzzle_offset = function(_direction) {
+        if (_direction.y == 0) return new Vector2(12, 0);
+        if (_direction.x == 0) return new Vector2(0, -13);
+        if (_direction.y < 0) return new Vector2(8, -7);
 
-        if (_direction.x != 0) {
-            _distance = min(_distance, _extent_x / abs(_direction.x));
-        }
-
-        if (_direction.y != 0) {
-            _distance = min(_distance, _extent_y / abs(_direction.y));
-        }
-
-        return new Vector2(x + _direction.x * _distance, y + _direction.y * _distance);
+        return new Vector2(9, 5);
     }
+
+    muzzle_flash_time = 0;
+    muzzle_flash_offset = new Vector2(0, 0);
+    muzzle_flash_frame = 0;
+    muzzle_flash_yscale = 1;
 
     /// @desc Dispara na direção da mira, se o botão estiver apertado e a espera tiver passado.
     /// @return {Bool} `true` se o tiro nasceu.
@@ -66,13 +66,21 @@ event_inherited();
         if (fire_cooldown > 0) return false;
         if (!obj_game.fire.check()) return false;
 
-        var _muzzle = get_muzzle_position(aim_direction);
+        var _offset = get_muzzle_offset(aim_direction);
+        var _muzzle = new Vector2(x + _offset.x * facing, y + _offset.y);
 
         /// @type {Id.Instance.obj_bullet}
         var _bullet = instance_create_layer(_muzzle.x, _muzzle.y, "Instances", obj_bullet);
 
         _bullet.launch(aim_direction);
         fire_cooldown = FIRE_COOLDOWN;
+
+        var _diagonal = aim_direction.x != 0 && aim_direction.y != 0;
+
+        muzzle_flash_offset.set(_offset.x * facing, _offset.y);
+        muzzle_flash_frame = _diagonal ? 1 : 0;
+        muzzle_flash_yscale = (_diagonal && aim_direction.y > 0) ? -1 : 1;
+        muzzle_flash_time = MUZZLE_FLASH_TIME;
 
         return true;
     }
