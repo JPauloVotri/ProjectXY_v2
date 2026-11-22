@@ -43,6 +43,7 @@
   },
   "name":"ProjectXY",
   "resources":[
+    {"id":{"name":"fnt_debug","path":"fonts/fnt_debug/fnt_debug.yy",},},
     {"id":{"name":"obj_actor","path":"objects/obj_actor/obj_actor.yy",},},
     {"id":{"name":"obj_bullet","path":"objects/obj_bullet/obj_bullet.yy",},},
     {"id":{"name":"obj_camera_zone_secret","path":"objects/obj_camera_zone_secret/obj_camera_zone_secret.yy",},},

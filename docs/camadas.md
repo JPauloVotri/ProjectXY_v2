@@ -42,8 +42,9 @@ e a profundidade da tabela e adicione a macro correspondente no `scr_draw`.
   porque o recorte da câmera acontece depois do render do mundo.
 - **Zonas são invisíveis.** `obj_camera_zone` liga `visible = false` no Create; a camada existe
   para posicionar e depurar as áreas.
-- **Sistemas não desenham.** `obj_game` e `obj_camera` não têm sprite; a camada fica no fundo para
-  não disputar espaço com o mundo.
+- **Sistemas não desenham o mundo.** `obj_game` e `obj_camera` não têm sprite; a câmera só desenha
+  a GUI, com a surface do mundo e o HUD. A camada fica no fundo para não disputar espaço com o
+  mundo.
 - **Novas rooms repetem a pilha.** O GameMaker não tem template de camadas; `rm_room_1` é a
   referência e esta tabela é a fonte de verdade.
 

@@ -19,6 +19,58 @@ event_inherited();
 
     /// @desc Frames em que o clarão do disparo fica visível.
     MUZZLE_FLASH_TIME = 4;
+
+    /// @desc Vida máxima inicial, antes de qualquer tanque.
+    BASE_MAX_HEALTH = 99;
+
+    /// @desc Vida que cada tanque soma ao máximo e à vida atual.
+    HEALTH_PER_TANK = 100;
+#endregion
+
+#region Vida
+    current_health = BASE_MAX_HEALTH;
+    max_health = BASE_MAX_HEALTH;
+    tanks = 0;
+
+    /// @desc Desconta vida, sem deixar o valor abaixo de zero.
+    /// @param {Real} _amount Dano a descontar.
+    /// @return {Bool} `true` quando a vida desceu.
+    take_damage = function(_amount) {
+        if (_amount <= 0) return false;
+        if (current_health <= 0) return false;
+
+        current_health = max(current_health - _amount, 0);
+
+        return true;
+    }
+
+    /// @desc Recupera vida, sem passar do máximo.
+    /// @param {Real} _amount Vida a recuperar.
+    /// @return {Bool} `true` quando a vida subiu.
+    restore_health = function(_amount) {
+        if (_amount <= 0) return false;
+        if (current_health >= max_health) return false;
+
+        current_health = min(current_health + _amount, max_health);
+
+        return true;
+    }
+
+    /// @desc Soma um tanque de vida: +100 no máximo e +100 na vida atual.
+    /// @return {Bool} `true` quando o tanque foi aplicado.
+    grant_health_tank = function() {
+        tanks++;
+        max_health += HEALTH_PER_TANK;
+        current_health = min(current_health + HEALTH_PER_TANK, max_health);
+
+        return true;
+    }
+
+    /// @desc Tanques cheios derivados da vida atual: cada 100 pontos contam como um.
+    /// @return {Real}
+    get_full_tank_count = function() {
+        return clamp(floor(current_health / HEALTH_PER_TANK), 0, tanks);
+    }
 #endregion
 
 #region Aparência

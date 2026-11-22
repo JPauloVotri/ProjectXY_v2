@@ -39,6 +39,31 @@ if (obj_game.debug_double_jump.check_pressed()) {
     show_debug_message("[power_up] pulo duplo " + (double_jump ? "ligado" : "desligado"));
 }
 
+// TODO: remover depois — junto com a entrada `debug_health_tank` do obj_game.
+if (obj_game.debug_health_tank.check_pressed()) {
+    grant_health_tank();
+    show_debug_message(
+        "[vida] tanque ganho; vida " + string(current_health) + " (" +
+        string(current_health % HEALTH_PER_TANK) + "); tanques " + string(tanks)
+    );
+}
+
+// TODO: remover depois — junto com a entrada `debug_damage` do obj_game.
+if (obj_game.debug_damage.check_stutter(30, 5) && take_damage(1)) {
+    show_debug_message(
+        "[vida] dano de teste; vida " + string(current_health) + " (" +
+        string(current_health % HEALTH_PER_TANK) + "); tanques " + string(tanks)
+    );
+}
+
+// TODO: remover depois — junto com a entrada `debug_heal` do obj_game.
+if (obj_game.debug_heal.check_stutter(30, 5) && restore_health(1)) {
+    show_debug_message(
+        "[vida] cura de teste; vida " + string(current_health) + " (" +
+        string(current_health % HEALTH_PER_TANK) + "); tanques " + string(tanks)
+    );
+}
+
 in_water = place_meeting(x, y, obj_water);
 physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
 

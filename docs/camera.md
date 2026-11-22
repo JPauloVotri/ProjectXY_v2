@@ -22,9 +22,10 @@ pixel art. É a técnica de **view surface + recorte fracionado**.
    com a câmera em pixel inteiro.
 3. No **Draw GUI Begin**, `draw_surface_part(view_surf, frac(x), frac(y), 320, 180, 0, 0)`
    recorta uma janela de 320×180 a partir da fração.
-4. A GUI de 320×180 é escalada para a janela a 4× ou 6×, com filtragem desligada.
+4. Ainda no **Draw GUI Begin**, `draw_health_hud` desenha o HUD por cima do recorte.
+5. A GUI de 320×180 é escalada para a janela a 4× ou 6×, com filtragem desligada.
 
-O passo 4 é o que produz a suavidade: o recorte é resolvido em espaço de 320, mas rasterizado no
+O passo 5 é o que produz a suavidade: o recorte é resolvido em espaço de 320, mas rasterizado no
 espaço do window. Um `frac = 0,3` vira 1,2px de tela, e não 0. Sem a escala da GUI, o recorte
 seria quantizado e a imagem andaria aos pulos de 1px.
 
@@ -106,7 +107,7 @@ chegar no limite, e assenta exatamente nele.
 | `__axis_step` / `__ease_step` | movimento de um eixo e o passo com desaceleração |
 | `__slide_to` | aplica os dois eixos, arredonda a posição e guarda o desejado |
 | `__clamp_zone` / `__resolve_zones` | os limites de uma zona e a passagem por todas |
-| Draw GUI Begin | recorta e desenha a surface |
+| Draw GUI Begin | recorta a surface e desenha o HUD por cima |
 | Clean Up | libera a surface |
 
 ## Armadilhas

@@ -56,4 +56,16 @@
     // TODO: remover depois — entrada de teste do power-up de pulo duplo.
     debug_double_jump = input_manager.create_input()
         .add_keyboard_key(ord("I"));
+
+    // TODO: remover depois — entrada de teste de dano em stutter.
+    debug_damage = input_manager.create_input()
+        .add_keyboard_key(ord("L"));
+
+    // TODO: remover depois — entrada de teste do tanque de vida.
+    debug_health_tank = input_manager.create_input()
+        .add_keyboard_key(ord("K"));
+
+    // TODO: remover depois — entrada de teste de cura em stutter.
+    debug_heal = input_manager.create_input()
+        .add_keyboard_key(ord("H"));
 #endregion
