@@ -5,6 +5,9 @@ event_inherited();
     MAX_HEALTH = 1;
     current_health = MAX_HEALTH;
 
+    /// @desc Chance de soltar um loot ao morrer; o tipo vem da tabela global.
+    DROP_CHANCE = .5;
+
     MOVEMENT_SPEED = .5;
     SLOPE_STEP_PENALTY = sqrt(2) - 1;
     SLOPE_MAX_PENALTY = .99;

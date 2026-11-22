@@ -20,6 +20,9 @@ event_inherited();
     /// @desc Destrói a instância ao zerar a vida; desligue para tocar a animação de morte.
     DESTROY_ON_DEATH = true;
 
+    /// @desc Chance de dropar algo ao morrer, de 0 a 1; o tipo vem da tabela global.
+    DROP_CHANCE = 0;
+
     /// @desc Roda uma vez com a vida em zero.
     on_death = function() {}
 
@@ -50,6 +53,7 @@ event_inherited();
 
         if (current_health == 0) {
             on_death_effect();
+            loot_drop(x, y, DROP_CHANCE);
             on_death();
 
             if (DESTROY_ON_DEATH) {

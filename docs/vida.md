@@ -49,6 +49,12 @@ autocomplete e a validação de tipos do Feather.
 A câmera chama o HUD no fim do Draw GUI Begin, depois de copiar a surface do mundo. Por ser GUI, o
 HUD não é tingido pela água e não sofre o recorte da câmera.
 
+### Cura por loot
+
+`obj_loot_health` chama `restore_health(10)`. A cura respeita `max_health`, mas o item é consumido
+mesmo com a vida cheia: `on_collect` devolve `true` sempre. O loot desaparece sozinho após 10
+segundos se não for coletado.
+
 ### Exemplos
 
 | `current_health` | `tanks` | HUD |
@@ -81,3 +87,5 @@ controle.
   aparece como cheio; em 99 o tanque deixa de contar.
 - **O HUD é GUI.** Desenhá-lo no Draw do mundo o deixaria sujeito à água e ao recorte da câmera.
 - **A vida 0 não mata.** Não há estado de morte; os atalhos de teste continuam funcionando.
+- **Loot com vida cheia ainda é consumido.** `restore_health` devolve `false`, mas `on_collect`
+  devolve `true` e o item some.

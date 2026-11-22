@@ -1,3 +1,8 @@
+#region Drops
+    randomize();
+    loot_init();
+#endregion
+
 #region Entrada
     input_manager = new InputManager();
     input_manager.refresh_gamepad();
