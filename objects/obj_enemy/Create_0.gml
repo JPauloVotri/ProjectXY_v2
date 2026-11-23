@@ -86,13 +86,16 @@ event_inherited();
     /// @desc Frames de invencibilidade concedidos ao encostar no corpo.
     TOUCH_INVINCIBLE_FRAMES = 60;
 
-    /// @desc Encostar num inimigo vivo arremessa o jogador; o corpo não fere depois da morte.
+    /// @desc Vida descontada ao encostar no corpo.
+    TOUCH_DAMAGE = 5;
+
+    /// @desc Encostar num inimigo vivo desconta vida e arremessa; o corpo não fere depois da morte.
     /// @param {Id.Instance.obj_player} _player Jogador que encostou.
-    /// @return {Bool} `true` quando o recuo começou.
+    /// @return {Bool} `true` quando o toque valeu.
     on_touch = function(_player) {
         if (current_health <= 0) return false;
 
-        return _player.bounce_from(x, TOUCH_INVINCIBLE_FRAMES);
+        return _player.hurt_from(x, TOUCH_DAMAGE, TOUCH_INVINCIBLE_FRAMES);
     }
 #endregion
 

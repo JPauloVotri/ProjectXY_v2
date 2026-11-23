@@ -14,8 +14,8 @@ autocomplete e a validação de tipos do Feather.
 - **O total de tanques é dinâmico.** `tanks` cresce a cada tanque e é o denominador do HUD; não há
   limite fixo de 15.
 - **A vida fica entre 0 e o máximo.** Dano tem piso em 0; cura tem teto em `max_health`.
-- **Sem morte nesta versão.** Zerar a vida só leva o número a 0; o contato com inimigos e perigos
-  arremessa o player, mas não desconta vida nem existe estado de morte.
+- **Sem morte nesta versão.** Zerar a vida só leva o número a 0; o contato desconta vida, mas não
+  existe estado de morte.
 
 ## Referência
 
@@ -56,24 +56,27 @@ drop não cria o item. Se ele caiu com a vida baixa e o player encheu antes de e
 ainda consome o item. `on_collect` chama `restore_health(10)` e devolve `true` sempre. O loot
 desaparece sozinho após 10 segundos se não for coletado.
 
-### Recuo por contato
+### Dano por contato
 
 `obj_hazard` é a base sem sprite dos perigos de toque: o `on_touch(_player)` padrão devolve `false` e
-cada perigo sobrescreve. `obj_crawler_blades` herda dela e arremessa o player; `obj_enemy` define o
-mesmo contrato para o corpo, com guarda de `current_health > 0`. O `Step` do player procura os dois
-depois do `move()` e chama `on_touch(self)`.
+cada perigo sobrescreve. `obj_crawler_blades` herda dela e fere o player; `obj_enemy` define o mesmo
+contrato para o corpo, com guarda de `current_health > 0`. O `Step` do player procura os dois depois
+do `move()` e chama `on_touch(self)`.
 
-O toque chama `bounce_from(_source_x, _invincible_frames)`. Se o player já está invencível, nada
-acontece; senão, a direção é `sign(x - _source_x)` (zero vira `-facing`), o resto fracionário é
-zerado e a velocidade vira
+O toque chama `hurt_from(_source_x, _damage, _invincible_frames)`. Se o player já está invencível,
+nada acontece; senão, `take_damage(_damage)` desconta a vida com piso em 0, a direção é
+`sign(x - _source_x)` (zero vira `-facing`), o resto fracionário é zerado e a velocidade vira
 `(_dir * HURT_PUSH_SPEED * physics_factor, -HURT_JUMP_SPEED * physics_factor)`. O player entra no
 estado `hurt`, que preserva o impulso e trava andar, pular e atirar por `HURT_LOCK_FRAMES`; ao fim,
 volta para `fall`.
 
+O retorno é `true` sempre que o toque vale, mesmo com a vida já em 0 e sem nada a descontar: o
+arremesso não depende de a vida ter descido.
+
 A invencibilidade fica em `invincible_time`, decrementado no `Step`. `start_invincibility(_frames)`
 usa `max` para não encurtar um recuo em andamento. As fontes atuais concedem
-`TOUCH_INVINCIBLE_FRAMES = 60`; o `Draw` pisca o player a cada `BLINK_INTERVAL` frames e
-`is_invincible()` responde se um novo toque seria aceito.
+`TOUCH_INVINCIBLE_FRAMES = 60` e tiram `TOUCH_DAMAGE = 5`; o `Draw` pisca o player a cada
+`BLINK_INTERVAL` frames e `is_invincible()` responde se um novo toque seria aceito.
 
 | Constante | Valor | Efeito |
 |---|---:|---|
@@ -82,9 +85,10 @@ usa `max` para não encurtar um recuo em andamento. As fontes atuais concedem
 | `HURT_LOCK_FRAMES` | `20` | frames de controle travado no estado `hurt` |
 | `BLINK_INTERVAL` | `3` | frames acesos/apagados na piscada da invencibilidade |
 | `TOUCH_INVINCIBLE_FRAMES` | `60` | invencibilidade concedida por lâminas e inimigos |
+| `TOUCH_DAMAGE` | `5` | vida descontada por lâminas e corpo de inimigo |
 
 O recuo escala pela água como o pulo: `physics_factor` vale `.5` dentro dela e `1` com
-`ignores_friction`. A vida não muda: esta etapa é só o arremesso.
+`ignores_friction`. O dano não escala: são sempre os `TOUCH_DAMAGE` pontos da fonte.
 
 ### Exemplos
 
@@ -118,8 +122,10 @@ controle.
   aparece como cheio; em 99 o tanque deixa de contar.
 - **O HUD é GUI.** Desenhá-lo no Draw do mundo o deixaria sujeito à água e ao recorte da câmera.
 - **A vida 0 não mata.** Não há estado de morte; os atalhos de teste continuam funcionando.
-- **O recuo não tira vida.** `bounce_from` só arremessa; `take_damage` continua restrito aos
-  atalhos de teste.
+- **O dano do toque é por fonte.** `hurt_from` desconta o `TOUCH_DAMAGE` de quem tocou; não existe
+  um valor global de contato. A invencibilidade decide se o toque vale, não quanto ele tira.
+- **Vida em 0 não impede o arremesso.** `hurt_from` devolve `true` mesmo quando `take_damage` não
+  desce a vida; o player continua sendo jogado para longe até a morte existir.
 - **O travamento é do recuo, não da invencibilidade.** O controle volta em `HURT_LOCK_FRAMES`
   frames; a piscada dura os `TOUCH_INVINCIBLE_FRAMES` concedidos pela fonte.
 - **Loot que já caiu é consumido mesmo com a vida cheia.** O filtro de drop impede criar o item

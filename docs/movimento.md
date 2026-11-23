@@ -20,8 +20,8 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 | `obj_actor` | base sem sprite: guarda estado, `move()` e os hooks padrão |
 | `obj_player` | herda de `obj_actor`; define as constantes e sobrescreve os hooks de x |
 | `obj_hazard` | base sem sprite: contrato `on_touch(_player)` para perigos de toque |
-| `obj_crawler_blades` | herda de `obj_hazard`; arremessa o player ao encostar |
-| `obj_enemy` | base dos inimigos; o corpo arremessa o player ao encostar, com guarda de vida |
+| `obj_crawler_blades` | herda de `obj_hazard`; fere o player ao encostar |
+| `obj_enemy` | base dos inimigos; o corpo fere o player ao encostar, com guarda de vida |
 | `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks, fere o inimigo que encontra, explode no primeiro contato e desenha o rastro de três frames a partir da boca |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
 | `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
@@ -203,16 +203,17 @@ Cada `update` segue a ordem **comportamento → chão → pulo → transição**
 
 `idle` e `walk` aplicam a mesma regra e existem separados para a animação; cada estado fixa a pose de entrada no `create` e `update_appearance()` cuida do que muda por frame. A ramificação de pouso do `fall` aplica a regra do chão e chama `try_jump()` **antes** de trocar para `idle`/`walk`: é isso que faz o pulo sair no próprio frame do pouso, com a velocidade horizontal do chão. No `fall` no ar, `apply_air_movement()` roda antes de `try_air_jump()`; se o segundo pulo dispara, o estado volta para `jump`.
 
-### Recuo
+### Dano por contato
 
 O player chama `on_touch(_player)` nos `obj_hazard` e `obj_enemy` que encontra depois do `move()`.
 O contrato devolve `true` quando o toque teve efeito; a base `obj_hazard` devolve `false` e cada
 perigo sobrescreve.
 
 As lâminas do crawler e o corpo dos inimigos chamam
-`_player.bounce_from(x, TOUCH_INVINCIBLE_FRAMES)`, com `TOUCH_INVINCIBLE_FRAMES = 60`. O
-`bounce_from` recusa se `is_invincible()`, calcula `_dir = sign(x - _source_x)` (zero vira
-`-facing`), zera `velocity_remainder` e aplica
+`_player.hurt_from(x, TOUCH_DAMAGE, TOUCH_INVINCIBLE_FRAMES)`, com `TOUCH_DAMAGE = 5` e
+`TOUCH_INVINCIBLE_FRAMES = 60`. O `hurt_from` recusa se `is_invincible()`, desconta a vida com
+`take_damage(_damage)`, calcula `_dir = sign(x - _source_x)` (zero vira `-facing`), zera
+`velocity_remainder` e aplica
 `(_dir * HURT_PUSH_SPEED * physics_factor, -HURT_JUMP_SPEED * physics_factor)`. Por fim, liga
 `invincible_time` com `start_invincibility(_invincible_frames)` e troca para `hurt`.
 
@@ -223,8 +224,8 @@ recusa durante `hurt`; mirar e virar continuam.
 `invincible_time` desce no `Step`; o `Draw` pisca o player a cada `BLINK_INTERVAL` frames enquanto
 ele for maior que zero. `start_invincibility(_frames)` usa `max` para não encurtar um recuo em
 andamento, então uma fonte de dano contínuo pode conceder poucos frames sem derrubar a
-invencibilidade longa de um recuo. O recuo escala pela água por `physics_factor`, como o pulo.
-Nesta etapa ele não desconta vida; a integração com `take_damage` fica em `docs/vida.md`.
+invencibilidade longa de um recuo. O recuo escala pela água por `physics_factor`, como o pulo; o
+dano não escala e a vida vem de `docs/vida.md`.
 
 ### Animação (`obj_player`)
 
@@ -424,7 +425,7 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O bob do torso é só de desenho.** `torso_offset_y` entra no torso; pernas, máscara e boca não se deslocam.
 - **Pulo e queda reusam quadros da caminhada.** Os índices 3, 4 e 6 precisam acompanhar a arte.
 - **A pose de entrada fica no `create` do estado.** O `update` do estado novo não roda no frame da troca; o que precisa valer na hora vai no `create`, e o que muda por frame vai em `update_appearance()`.
-- **O recuo não tira vida.** `bounce_from` só muda a velocidade e a invencibilidade; a vida continua intacta até o passo de dano ser ligado.
+- **O dano do toque vem da fonte.** `hurt_from` desconta o `TOUCH_DAMAGE` de quem tocou; não há um valor global de contato no player. `take_damage` sozinho não arremessa.
 - **O travamento do recuo é mais curto que a invencibilidade.** O controle volta em `HURT_LOCK_FRAMES`; a piscada e o bloqueio de novos toques duram os frames concedidos pela fonte.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem `(3, 8)`, então `image_xscale = -1` mantém o bbox em `[-3, 2]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 - **O espaçamento da escada é o que exige o power-up.** Na água, a escada da direita sobe 24px e depois 32px, contra 18px de pulo base e 25px do duplo base; o pulo alto sozinho (34px) passa, e com o duplo chega a 47px. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.

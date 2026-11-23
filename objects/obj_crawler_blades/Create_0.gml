@@ -20,11 +20,14 @@ event_inherited();
     /// @desc Frames de invencibilidade concedidos ao encostar nas lâminas.
     TOUCH_INVINCIBLE_FRAMES = 60;
 
-    /// @desc Encostar nas lâminas arremessa o jogador para longe.
+    /// @desc Vida descontada ao encostar nas lâminas.
+    TOUCH_DAMAGE = 5;
+
+    /// @desc Encostar nas lâminas desconta vida e arremessa o jogador para longe.
     /// @param {Id.Instance.obj_player} _player Jogador que encostou.
-    /// @return {Bool} `true` quando o recuo começou.
+    /// @return {Bool} `true` quando o toque valeu.
     on_touch = function(_player) {
-        return _player.bounce_from(x, TOUCH_INVINCIBLE_FRAMES);
+        return _player.hurt_from(x, TOUCH_DAMAGE, TOUCH_INVINCIBLE_FRAMES);
     }
 #endregion
 

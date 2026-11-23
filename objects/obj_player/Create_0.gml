@@ -89,7 +89,7 @@ event_inherited();
     /// @desc Frames restantes de invencibilidade; o Draw pisca enquanto for maior que zero.
     invincible_time = 0;
 
-    /// @desc Verdadeiro enquanto um novo toque ainda não pode arremessar o jogador.
+    /// @desc Verdadeiro enquanto um novo toque ainda não pode ferir o jogador.
     /// @return {Bool}
     is_invincible = function() {
         return invincible_time > 0;
@@ -101,12 +101,15 @@ event_inherited();
         invincible_time = max(invincible_time, _frames);
     }
 
-    /// @desc Arremessa o jogador para longe da fonte, se não estiver invencível.
+    /// @desc Desconta vida e arremessa o jogador para longe da fonte, se não estiver invencível.
     /// @param {Real} _source_x X da fonte que encostou.
+    /// @param {Real} _damage Vida descontada pelo toque.
     /// @param {Real} _invincible_frames Frames de invencibilidade concedidos pela fonte.
-    /// @return {Bool} `true` quando o recuo começou.
-    bounce_from = function(_source_x, _invincible_frames) {
+    /// @return {Bool} `true` quando o toque valeu.
+    hurt_from = function(_source_x, _damage, _invincible_frames) {
         if (is_invincible()) return false;
+
+        take_damage(_damage);
 
         var _dir = sign(x - _source_x);
 
