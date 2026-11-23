@@ -11,7 +11,10 @@
     "name":"Enemies",
     "path":"folders/Objects/Actors/Enemies.yy",
   },
-  "parentObjectId":null,
+  "parentObjectId":{
+    "name":"obj_hazard",
+    "path":"objects/obj_hazard/obj_hazard.yy",
+  },
   "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,

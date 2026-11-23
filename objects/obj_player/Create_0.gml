@@ -25,6 +25,18 @@ event_inherited();
 
     /// @desc Vida que cada tanque soma ao máximo e à vida atual.
     HEALTH_PER_TANK = 100;
+
+    /// @desc Impulso vertical do recuo ao encostar num perigo.
+    HURT_JUMP_SPEED = 1.2;
+
+    /// @desc Impulso horizontal do recuo, em px por frame.
+    HURT_PUSH_SPEED = .7;
+
+    /// @desc Frames em que o controle fica travado depois do recuo.
+    HURT_LOCK_FRAMES = 20;
+
+    /// @desc Frames acesos e apagados alternados durante a invencibilidade.
+    BLINK_INTERVAL = 3;
 #endregion
 
 #region Vida
@@ -73,6 +85,45 @@ event_inherited();
     }
 #endregion
 
+#region Dano
+    /// @desc Frames restantes de invencibilidade; o Draw pisca enquanto for maior que zero.
+    invincible_time = 0;
+
+    /// @desc Verdadeiro enquanto um novo toque ainda não pode arremessar o jogador.
+    /// @return {Bool}
+    is_invincible = function() {
+        return invincible_time > 0;
+    }
+
+    /// @desc Liga a invencibilidade pelo tempo informado, sem encurtar a que já existe.
+    /// @param {Real} _frames Frames concedidos pela fonte do toque.
+    start_invincibility = function(_frames) {
+        invincible_time = max(invincible_time, _frames);
+    }
+
+    /// @desc Arremessa o jogador para longe da fonte, se não estiver invencível.
+    /// @param {Real} _source_x X da fonte que encostou.
+    /// @param {Real} _invincible_frames Frames de invencibilidade concedidos pela fonte.
+    /// @return {Bool} `true` quando o recuo começou.
+    bounce_from = function(_source_x, _invincible_frames) {
+        if (is_invincible()) return false;
+
+        var _dir = sign(x - _source_x);
+
+        if (_dir == 0) _dir = -facing;
+
+        velocity_remainder.set(0, 0);
+        velocity.set(
+            _dir * HURT_PUSH_SPEED * physics_factor,
+            -HURT_JUMP_SPEED * physics_factor
+        );
+        start_invincibility(_invincible_frames);
+        state_machine.change_state("hurt");
+
+        return true;
+    }
+#endregion
+
 #region Aparência
     facing = FACING.RIGHT;
     image_xscale = facing;
@@ -112,10 +163,12 @@ event_inherited();
     muzzle_flash_frame = 0;
     muzzle_flash_yscale = 1;
 
-    /// @desc Dispara na direção da mira, se o botão estiver apertado e a espera tiver passado.
+    /// @desc Dispara na direção da mira, se o botão estiver apertado, a espera tiver passado e o
+    /// jogador não estiver no recuo.
     /// @return {Bool} `true` se o tiro nasceu.
     try_fire = function() {
         if (fire_cooldown > 0) return false;
+        if (state_machine.is_state("hurt")) return false;
         if (!obj_game.fire.check()) return false;
 
         var _offset = get_muzzle_offset(aim_direction);
@@ -280,6 +333,13 @@ event_inherited();
         if (try_air_jump()) return;
     }
 
+    /// @desc Mantém o impulso do recuo e devolve o controle quando o travamento acaba.
+    on_hurt_update = function() {
+        if (state_machine.time < HURT_LOCK_FRAMES) return;
+
+        state_machine.change_state("fall");
+    }
+
 #endregion
 
 #region Animação
@@ -343,6 +403,13 @@ event_inherited();
         torso_offset_y = WALK_TORSO_BOB_Y[WALK_FALL_FRAME];
     }
 
+    /// @desc Fixa a pose de queda e o travamento ao entrar no recuo.
+    on_hurt_create = function() {
+        legs_sprite = spr_player_legs_walk;
+        legs_frame = WALK_FALL_FRAME;
+        torso_offset_y = WALK_TORSO_BOB_Y[WALK_FALL_FRAME];
+    }
+
     /// @desc Quadro do torso correspondente à direção da mira.
     /// @return {Real}
     get_torso_frame = function() {
@@ -379,7 +446,8 @@ event_inherited();
         .add_state(new State("idle").set_create(on_idle_create).set_update(on_idle_update))
         .add_state(new State("walk").set_create(on_walk_create).set_update(on_walk_update))
         .add_state(new State("jump").set_create(on_jump_create).set_update(on_jump_update))
-        .add_state(new State("fall").set_create(on_fall_create).set_update(on_fall_update));
+        .add_state(new State("fall").set_create(on_fall_create).set_update(on_fall_update))
+        .add_state(new State("hurt").set_create(on_hurt_create).set_update(on_hurt_update));
 #endregion
 
 #region Hooks

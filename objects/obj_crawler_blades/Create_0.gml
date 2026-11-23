@@ -1,3 +1,5 @@
+event_inherited();
+
 #region Configuração
     /// @type {Id.Instance.obj_crawler}
     parent = noone;
@@ -12,6 +14,18 @@
 
     /// @desc Desenhado pelo crawler; a instância existe só para guardar a animação.
     visible = false;
+#endregion
+
+#region Contato
+    /// @desc Frames de invencibilidade concedidos ao encostar nas lâminas.
+    TOUCH_INVINCIBLE_FRAMES = 60;
+
+    /// @desc Encostar nas lâminas arremessa o jogador para longe.
+    /// @param {Id.Instance.obj_player} _player Jogador que encostou.
+    /// @return {Bool} `true` quando o recuo começou.
+    on_touch = function(_player) {
+        return _player.bounce_from(x, TOUCH_INVINCIBLE_FRAMES);
+    }
 #endregion
 
 #region Animação

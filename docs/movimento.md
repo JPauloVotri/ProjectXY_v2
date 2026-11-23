@@ -19,6 +19,9 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 |---|---|
 | `obj_actor` | base sem sprite: guarda estado, `move()` e os hooks padrão |
 | `obj_player` | herda de `obj_actor`; define as constantes e sobrescreve os hooks de x |
+| `obj_hazard` | base sem sprite: contrato `on_touch(_player)` para perigos de toque |
+| `obj_crawler_blades` | herda de `obj_hazard`; arremessa o player ao encostar |
+| `obj_enemy` | base dos inimigos; o corpo arremessa o player ao encostar, com guarda de vida |
 | `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks, fere o inimigo que encontra, explode no primeiro contato e desenha o rastro de três frames a partir da boca |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
 | `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
@@ -170,12 +173,16 @@ o filtro, use `loot_drop(x, y, 1)` com a vida cheia e depois ferida.
 | `SLOPE_MAX_PENALTY` | `.99` | teto da penalidade acumulada na rampa |
 | `FIRE_COOLDOWN` | `20` | frames entre tiros; também é a espera do disparo automático |
 | `MUZZLE_FLASH_TIME` | `4` | frames em que o clarão do disparo fica visível |
+| `HURT_JUMP_SPEED` | `1.2` | impulso vertical do recuo ao encostar num perigo |
+| `HURT_PUSH_SPEED` | `.7` | impulso horizontal do recuo, em px por frame |
+| `HURT_LOCK_FRAMES` | `20` | frames de controle travado no estado `hurt` |
+| `BLINK_INTERVAL` | `3` | frames acesos/apagados na piscada da invencibilidade |
 
 Com esses valores e o pulo alto desligado, o pulo sobe **37px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 36, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 60.
 
 ### Estados (`obj_player`)
 
-O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()`, acumula a distância horizontal da caminhada, tenta disparar e chama `update_appearance()`. A regra horizontal, o impulso do pulo e o corte moram nos estados.
+O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()` e procura `obj_hazard` e `obj_enemy` na posição final, chamando `on_touch(self)` em cada um. Depois acumula a distância horizontal da caminhada, tenta disparar e chama `update_appearance()`. `invincible_time` desce um por frame no começo do `Step`. A regra horizontal, o impulso do pulo, o corte e o recuo moram nos estados.
 
 | Estado | Entra quando | Comportamento | Sai para |
 |---|---|---|---|
@@ -183,6 +190,7 @@ O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade te
 | `walk` | `input_x != 0` no chão | regra do chão | `idle`, `fall`, `jump` |
 | `jump` | impulso do pulo | controle aéreo + corte | `fall` quando `velocity.y >= 0` |
 | `fall` | no ar, descendo | controle aéreo | `idle`/`walk` ao pousar, `jump` com buffer ou pulo aéreo |
+| `hurt` | toque num perigo ou inimigo | preserva o impulso; sem regra horizontal, pulo ou tiro | `fall` após `HURT_LOCK_FRAMES` |
 
 | Auxiliar | Papel |
 |---|---|
@@ -194,6 +202,29 @@ O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade te
 Cada `update` segue a ordem **comportamento → chão → pulo → transição**, que reproduz a ordem do `Step` anterior à máquina.
 
 `idle` e `walk` aplicam a mesma regra e existem separados para a animação; cada estado fixa a pose de entrada no `create` e `update_appearance()` cuida do que muda por frame. A ramificação de pouso do `fall` aplica a regra do chão e chama `try_jump()` **antes** de trocar para `idle`/`walk`: é isso que faz o pulo sair no próprio frame do pouso, com a velocidade horizontal do chão. No `fall` no ar, `apply_air_movement()` roda antes de `try_air_jump()`; se o segundo pulo dispara, o estado volta para `jump`.
+
+### Recuo
+
+O player chama `on_touch(_player)` nos `obj_hazard` e `obj_enemy` que encontra depois do `move()`.
+O contrato devolve `true` quando o toque teve efeito; a base `obj_hazard` devolve `false` e cada
+perigo sobrescreve.
+
+As lâminas do crawler e o corpo dos inimigos chamam
+`_player.bounce_from(x, TOUCH_INVINCIBLE_FRAMES)`, com `TOUCH_INVINCIBLE_FRAMES = 60`. O
+`bounce_from` recusa se `is_invincible()`, calcula `_dir = sign(x - _source_x)` (zero vira
+`-facing`), zera `velocity_remainder` e aplica
+`(_dir * HURT_PUSH_SPEED * physics_factor, -HURT_JUMP_SPEED * physics_factor)`. Por fim, liga
+`invincible_time` com `start_invincibility(_invincible_frames)` e troca para `hurt`.
+
+O estado `hurt` não aplica regra horizontal nem pulo: mantém o impulso e trava andar, pular e
+atirar. Quando `state_machine.time` chega a `HURT_LOCK_FRAMES`, volta para `fall`. O `try_fire`
+recusa durante `hurt`; mirar e virar continuam.
+
+`invincible_time` desce no `Step`; o `Draw` pisca o player a cada `BLINK_INTERVAL` frames enquanto
+ele for maior que zero. `start_invincibility(_frames)` usa `max` para não encurtar um recuo em
+andamento, então uma fonte de dano contínuo pode conceder poucos frames sem derrubar a
+invencibilidade longa de um recuo. O recuo escala pela água por `physics_factor`, como o pulo.
+Nesta etapa ele não desconta vida; a integração com `take_damage` fica em `docs/vida.md`.
 
 ### Animação (`obj_player`)
 
@@ -219,7 +250,7 @@ As três têm 16×16 e são desenhadas no mesmo `(x, y)`; as origens fazem o enc
 
 **Torso.** `WALK_TORSO_BOB_Y` desce o torso 1px nos quadros 2 e 6; parado, `IDLE_TORSO_OFFSET_Y` também desce 1px. Pulo e queda usam o valor da tabela no quadro de entrada (4 → 0, 6 → 1); a troca para o quadro 3 no terminal muda só as pernas, sem mexer no offset do torso. O deslocamento é só de desenho: não altera a máscara, a boca nem a posição.
 
-**Estados.** Cada estado fixa a pose de entrada no `create`: `idle` escolhe a sprite de pernas parada e o quadro conforme a mira; `walk` zera o ciclo; `jump` e `fall` fixam os quadros 4 e 6. `update_appearance()` roda depois de `state_machine.update()`, avança a caminhada, troca a queda para o quadro 3 quando `velocity.y >= TERMINAL_SPEED * physics_factor` e escolhe o quadro do torso pela mira. O quadro do torso não fica no `create` porque a mira muda sem troca de estado.
+**Estados.** Cada estado fixa a pose de entrada no `create`: `idle` escolhe a sprite de pernas parada e o quadro conforme a mira; `walk` zera o ciclo; `jump` e `fall` fixam os quadros 4 e 6; `hurt` usa o quadro de queda. `update_appearance()` roda depois de `state_machine.update()`, avança a caminhada, troca a queda para o quadro 3 quando `velocity.y >= TERMINAL_SPEED * physics_factor` e escolhe o quadro do torso pela mira. O quadro do torso não fica no `create` porque a mira muda sem troca de estado.
 
 ### Pulo e ar
 
@@ -319,7 +350,7 @@ O `x` é `facing` ou `0` — como não existe componente contra o `facing`, não
 
 O tiro nasce no centro desse deslocamento. O clarão é desenhado pelo próprio player, depois do torso, por `MUZZLE_FLASH_TIME` frames; usa `image_xscale` para espelhar e `muzzle_flash_yscale = -1` na diagonal para baixo.
 
-**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático) e `fire_cooldown == 0`; cria o projétil na camada `Projectiles` (`LAYER_PROJECTILES`), chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O offset e o quadro do clarão ficam gravados no disparo; a mira pode mudar sem deslocar o clarão já aceso. O primeiro tiro sai no frame do aperto.
+**Disparo.** `try_fire()` exige `obj_game.fire.check()` (segurar mantém o automático), `fire_cooldown == 0` e que o estado não seja `hurt`; cria o projétil na camada `Projectiles` (`LAYER_PROJECTILES`), chama `launch(aim_direction)` e grava `FIRE_COOLDOWN`. O offset e o quadro do clarão ficam gravados no disparo; a mira pode mudar sem deslocar o clarão já aceso. O primeiro tiro sai no frame do aperto.
 
 **Projétil (`obj_bullet`).** Herda de `obj_actor`: o Create chama `event_inherited()`, `velocity` e `velocity_remainder` vêm do pai, e o Step usa o `move()` normal — a máscara 4×4 do sprite testa o cenário em passos de 1 px. Os hooks `on_x_blocked`/`on_y_blocked` marcam `hit` e guardam o passo de contato; `on_x_moved`/`on_y_moved` procuram inimigo a cada passo de 1 px. O Step destrói depois do `move()`, nunca dentro do laço.
 
@@ -393,6 +424,8 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O bob do torso é só de desenho.** `torso_offset_y` entra no torso; pernas, máscara e boca não se deslocam.
 - **Pulo e queda reusam quadros da caminhada.** Os índices 3, 4 e 6 precisam acompanhar a arte.
 - **A pose de entrada fica no `create` do estado.** O `update` do estado novo não roda no frame da troca; o que precisa valer na hora vai no `create`, e o que muda por frame vai em `update_appearance()`.
+- **O recuo não tira vida.** `bounce_from` só muda a velocidade e a invencibilidade; a vida continua intacta até o passo de dano ser ligado.
+- **O travamento do recuo é mais curto que a invencibilidade.** O controle volta em `HURT_LOCK_FRAMES`; a piscada e o bloqueio de novos toques duram os frames concedidos pela fonte.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem `(3, 8)`, então `image_xscale = -1` mantém o bbox em `[-3, 2]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 - **O espaçamento da escada é o que exige o power-up.** Na água, a escada da direita sobe 24px e depois 32px, contra 18px de pulo base e 25px do duplo base; o pulo alto sozinho (34px) passa, e com o duplo chega a 47px. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.
 - **O segundo pulo é um só e só na descida.** `air_jump_used` zera no chão e na coleta; apertar durante a subida só fica no buffer de 5 frames. Na velocidade terminal o segundo pulo não dispara.

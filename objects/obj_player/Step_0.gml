@@ -19,6 +19,7 @@ if (!_ignores_down) {
 
 fire_cooldown = max(fire_cooldown - 1, 0);
 muzzle_flash_time = max(muzzle_flash_time - 1, 0);
+invincible_time = max(invincible_time - 1, 0);
 
 // TODO: remover depois — junto com a entrada `debug_swim` do obj_game.
 if (obj_game.debug_swim.check_pressed()) {
@@ -88,6 +89,16 @@ if (is_grounded()) {
 var _previous_x = x;
 
 move();
+
+/// @type {Id.Instance.obj_hazard}
+var _hazard = instance_place(x, y, obj_hazard);
+
+if (_hazard != noone) _hazard.on_touch(self);
+
+/// @type {Id.Instance.obj_enemy}
+var _enemy = instance_place(x, y, obj_enemy);
+
+if (_enemy != noone) _enemy.on_touch(self);
 
 if (state_machine.is_state("walk")) {
     walk_distance += abs(x - _previous_x);

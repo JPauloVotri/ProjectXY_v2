@@ -56,6 +56,7 @@
     {"id":{"name":"obj_explosion_enemy","path":"objects/obj_explosion_enemy/obj_explosion_enemy.yy",},},
     {"id":{"name":"obj_explosion","path":"objects/obj_explosion/obj_explosion.yy",},},
     {"id":{"name":"obj_game","path":"objects/obj_game/obj_game.yy",},},
+    {"id":{"name":"obj_hazard","path":"objects/obj_hazard/obj_hazard.yy",},},
     {"id":{"name":"obj_loot_health","path":"objects/obj_loot_health/obj_loot_health.yy",},},
     {"id":{"name":"obj_pickup","path":"objects/obj_pickup/obj_pickup.yy",},},
     {"id":{"name":"obj_player","path":"objects/obj_player/obj_player.yy",},},

@@ -1,3 +1,5 @@
+if (invincible_time > 0 && (invincible_time div BLINK_INTERVAL) % 2 == 0) return;
+
 draw_sprite_ext(
     legs_sprite,
     legs_frame,

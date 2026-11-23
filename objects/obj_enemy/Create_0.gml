@@ -82,6 +82,20 @@ event_inherited();
     }
 #endregion
 
+#region Contato
+    /// @desc Frames de invencibilidade concedidos ao encostar no corpo.
+    TOUCH_INVINCIBLE_FRAMES = 60;
+
+    /// @desc Encostar num inimigo vivo arremessa o jogador; o corpo não fere depois da morte.
+    /// @param {Id.Instance.obj_player} _player Jogador que encostou.
+    /// @return {Bool} `true` quando o recuo começou.
+    on_touch = function(_player) {
+        if (current_health <= 0) return false;
+
+        return _player.bounce_from(x, TOUCH_INVINCIBLE_FRAMES);
+    }
+#endregion
+
 #region Desenho
     /// @desc Desenha por cima do corpo, depois do branquejar; filhos sobrescrevem.
     on_draw = function() {}
