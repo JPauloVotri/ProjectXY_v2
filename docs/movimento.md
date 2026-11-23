@@ -22,7 +22,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 | `obj_bullet` | herda de `obj_actor`; morre no cenário pelos hooks, fere o inimigo que encontra, explode no primeiro contato e desenha o rastro de três frames a partir da boca |
 | `obj_solid` | tudo que colide; `obj_solid_slope` herda dele para ser detectado |
 | `obj_pickup` | base sem sprite: detecta a coleta e chama `on_collect` |
-| `obj_loot_health` | herda de `obj_pickup`; recupera 10 de vida e é consumido mesmo com a vida cheia |
+| `obj_loot_health` | herda de `obj_pickup`; só cai com a vida abaixo do máximo; recupera 10 e é consumido mesmo se a vida encher depois |
 | `obj_power_up` | marcador sem sprite: todo tipo de power-up herda dele |
 | `obj_power_up_frictionless` | herda do marcador; anula a fricção pelo método do jogador |
 | `obj_power_up_high_jump` | herda do marcador; multiplica o impulso do pulo pelo método do jogador |
@@ -121,32 +121,40 @@ A base declara `on_collect` com `return false`, então um tipo que esqueça a so
 ### Loot
 
 O loot de vida não passa por `obj_power_up`: `obj_loot_health` herda direto de `obj_pickup`.
-O drop também não pertence ao inimigo; `scr_loot` guarda a tabela global, sorteia o tipo e cria a
+O drop também não pertence ao inimigo; `scr_loot` guarda a tabela global, escolhe o tipo e cria a
 instância. O inimigo só declara `DROP_CHANCE` e chama `loot_drop(x, y, DROP_CHANCE)` na morte.
 
 | Função | Papel |
 |---|---|
 | `loot_init()` | monta `global.loot_table`; chamada uma vez pelo `obj_game` |
-| `loot_pick_item()` | sorteia um tipo por peso; devolve `noone` quando não há peso positivo |
+| `loot_pick_item(_player)` | filtra os tipos úteis ao player e sorteia um por peso; devolve `noone` quando nenhum serve |
 | `loot_spawn(_x, _y, _item, _index = 0)` | cria um loot específico em `LAYER_ACTORS`; o índice desloca 4 px em cruz |
-| `loot_drop(_x, _y, _chance, _count = 1)` | rola a chance uma vez e cria até `_count` itens sorteados |
+| `loot_drop(_x, _y, _chance, _count = 1)` | resolve o player, rola a chance e cria até `_count` itens úteis |
 
-`global.loot_table` é um array de `{ item, weight }`. Depois que a chance do inimigo passa, a
-chance de cada tipo é `weight / soma dos pesos`. Hoje há só `obj_loot_health`, com peso `1`.
+`global.loot_table` é um array de `{ item, weight, is_needed }`. `is_needed(_player)` diz se o
+atributo daquele tipo ainda aceita ganho; a vida usa `current_health < max_health`. Depois que a
+chance do inimigo passa, só as entradas elegíveis entram no sorteio, com chance
+`weight / soma dos pesos elegíveis`. Hoje há só `obj_loot_health`, com peso `1`: com a vida cheia,
+nada cai; com a vida abaixo do máximo, o item pode cair.
 
-A chance de dropar alguma coisa é do inimigo: `obj_enemy.DROP_CHANCE` começa em `0` e o crawler
-usa `.5`. A tabela de tipos é a mesma para todos os inimigos. `obj_game` chama `randomize()` e
-`loot_init()` no Create.
+A chance de tentar um drop é do inimigo: `obj_enemy.DROP_CHANCE` começa em `0` e o crawler usa
+`.5`. Ela não garante um item: se todos os atributos estiverem cheios, `loot_pick_item` devolve
+`noone`. A tabela é a mesma para todos os inimigos. `loot_drop` procura `obj_player` com
+`instance_find` e devolve `0` sem player. `obj_game` chama `randomize()` e `loot_init()` no
+Create.
 
 `obj_loot_health` recupera `HEAL_AMOUNT = 10` com `restore_health` e sempre devolve `true` em
-`on_collect`, então é consumido mesmo com a vida cheia. Se ninguém coletar, o `Alarm 0` destrói a
-instância após `10 * game_get_speed(gamespeed_fps)` passos.
+`on_collect`, então é consumido mesmo com a vida cheia. O filtro vale no momento do drop: se o
+item caiu com a vida baixa e o player encheu antes de encostar, a coleta ainda gasta o item. Se
+ninguém coletar, o `Alarm 0` destrói a instância após
+`10 * game_get_speed(gamespeed_fps)` passos.
 
 A sprite `spr_loot_health` tem 4 frames: `0, 1, 2, 1`. O quarto frame é uma cópia do segundo; o
 loop nativo produz `0, 1, 2, 1, 0, 1...`. O ping-pong do editor de sprite é só preview e não
 altera o runtime.
 
-Para testar sem morte, chame `loot_spawn(x, y, obj_loot_health)`.
+Para testar sem morte, chame `loot_spawn(x, y, obj_loot_health)`; ele ignora o filtro. Para testar
+o filtro, use `loot_drop(x, y, 1)` com a vida cheia e depois ferida.
 
 ### Constantes (`obj_player`)
 
@@ -390,12 +398,18 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **O segundo pulo é um só e só na descida.** `air_jump_used` zera no chão e na coleta; apertar durante a subida só fica no buffer de 5 frames. Na velocidade terminal o segundo pulo não dispara.
 - **A coleta lê a posição do player depois do `move()`.** O `Step` do pickup precisa rodar depois do player, o que na room depende da ordem de criação: a instância do pickup nasce depois. Fora dessa ordem a coleta atrasa um frame — a 3 px/frame não há risco de atravessar a máscara de 6 px.
 - **Nenhuma base se posiciona.** `obj_pickup` e `obj_power_up` não têm sprite: a instância da room é sempre um tipo com sprite própria, e uma instância da base estoura na checagem de colisão do `Step`.
-- **A chance do inimigo e a chance do tipo são separadas.** `DROP_CHANCE` decide se algo cai;
-  `global.loot_table` decide o quê. Mudar o peso da vida muda a distribuição de todos os inimigos.
+- **A chance do inimigo e a chance do tipo são separadas.** `DROP_CHANCE` decide se o drop é
+  tentado; `global.loot_table` decide se há tipo elegível e qual cai. Com todos os atributos
+  cheios, a tentativa termina sem item. Mudar o peso da vida muda a distribuição de todos os
+  inimigos.
+- **Atributo cheio sai do sorteio, não vira peso zero.** A entrada continua na tabela; é
+  `is_needed(_player)` que a remove naquela chamada. Uma entrada nova precisa declarar o próprio
+  filtro.
 - **O ping-pong do editor de sprite não vale no jogo.** O vai e volta do loot vem do quarto frame
   repetido, não da opção de preview.
-- **O loot é consumido com a vida cheia.** `on_collect` devolve `true` mesmo quando
-  `restore_health` não sobe nada.
+- **O loot que já caiu é consumido mesmo com a vida cheia.** Se o item caiu com a vida baixa e o
+  player encheu antes de encostar, `on_collect` devolve `true` mesmo quando `restore_health` não
+  sobe nada.
 - **O loot some em 10 segundos de jogo.** O `Alarm 0` conta passos; não é um contador em tempo real
   fora do passo.
 - **O tiro não sai para trás.** A mira usa `facing` ou `0` no eixo x; para virar, o jogador precisa andar para o outro lado.

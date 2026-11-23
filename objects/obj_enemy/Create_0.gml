@@ -20,7 +20,7 @@ event_inherited();
     /// @desc Destrói a instância ao zerar a vida; desligue para tocar a animação de morte.
     DESTROY_ON_DEATH = true;
 
-    /// @desc Chance de dropar algo ao morrer, de 0 a 1; o tipo vem da tabela global.
+    /// @desc Chance de tentar um drop ao morrer, de 0 a 1; a tabela global escolhe um tipo útil.
     DROP_CHANCE = 0;
 
     /// @desc Roda uma vez com a vida em zero.
