@@ -1,10 +1,10 @@
 # Project XY
 
-**Versão:** 0.1.0-alpha
+**Versão:** 0.2.0-alpha
 
 Protótipo de plataforma 2D em GameMaker LTS 2026. Há uma sala só, de 960×360, com resolução
 interna de 320×180 rodando a 60 fps. Não existe objetivo nem condição de vitória: o que está em
-teste é o movimento, a água, a câmera, os power-ups e o tiro.
+teste é o movimento, a água, a câmera, os power-ups, o tiro, a vida, o dano e a morte.
 
 ## Rodar pela IDE
 
@@ -31,6 +31,7 @@ então ele vem pronto de quem compilou.
 | Mirar na diagonal | `LShift` + `↑`/`↓` (ou `W`/`S`) | `RB`/`R1` + D-pad ↑/↓ |
 | Mirar reto para cima/baixo | `↑`/`↓` (ou `W`/`S`) sem a mira e parado | D-pad ↑/↓ sem `RB`/`R1` e parado |
 | Reiniciar | `F5` | — |
+| Sair do jogo | `Esc` | `Start`/`Options` |
 
 - `A` e `✕` são o mesmo botão físico, o de face de baixo: o Xbox chama de `A` e o PlayStation
   de `✕` (Xis). `X` e `□` também são o mesmo botão, o de face da esquerda.
@@ -44,6 +45,7 @@ então ele vem pronto de quem compilou.
   `[input] descoberto no slot N` no console de debug.
 - `F5` reinicia com a janela do jogo em foco. Com a janela da IDE em foco, a mesma tecla
   interrompe a execução — para testar o reinício, use o executável.
+- `Esc` fecha o jogo; ainda não existe menu de pausa.
 
 ## O que observar
 
@@ -64,8 +66,16 @@ então ele vem pronto de quem compilou.
 - **Câmera.** Ela adianta até 24 px em x e 8 px em y na direção do movimento, para nas bordas da
   sala e é bloqueada pelas quatro zonas. O movimento é suave sem tremer o pixel art, e a imagem
   não sai do quadro nem na borda.
-- **Power-ups.** Somem ao encostar e o efeito vale até reiniciar. São três: sem fricção (no fundo
-  da água), pulo alto e pulo duplo.
+- **Power-ups.** Somem ao encostar e o efeito vale até reiniciar. São quatro: sem fricção (no fundo
+  da água), pulo alto, pulo duplo e o tanque de vida.
+- **Vida e tanques.** O HUD do canto mostra o resto dentro do tanque e os tanques cheios sobre o
+  total. A vida base é 99; cada tanque soma 100 ao máximo e à vida atual.
+- **Inimigos e loot.** O crawler morre com um tiro, explode e às vezes deixa um loot de vida, que
+  cura 10 e some após 10 segundos se ninguém pegar.
+- **Dano por contato.** Encostar nas lâminas do crawler ou no corpo de um inimigo vivo tira 5 de
+  vida, arremessa o player e o deixa piscando por 60 frames, sem levar outro toque nesse intervalo.
+- **Morte.** Zerar a vida apaga a tela com o corpo congelado, solta faíscas, pisca o corpo em branco
+  e termina numa explosão; a room reinicia com 99 de vida e nenhum tanque.
 - **Reinício.** `F5` só reinicia quando a tecla é solta, então segurar não entra em laço.
 
 ## Atalhos temporários de teste
@@ -75,19 +85,24 @@ então ele vem pronto de quem compilou.
 | `P` | Liga e desliga o efeito sem fricção |
 | `O` | Liga e desliga o pulo alto |
 | `I` | Liga e desliga o pulo duplo |
+| `K` | Concede um tanque de vida |
+| `L` | Tira 1 de vida a cada 5 frames com a tecla apertada |
+| `H` | Devolve 1 de vida a cada 5 frames com a tecla apertada |
+| `M` | Mata o player na hora |
 
-Cada um imprime o estado no console de debug. São atalhos de desenvolvimento, marcados no código
-para remoção, e servem só para testar um efeito isolado sem ir atrás do pickup.
+Cada um imprime o estado no console de debug, exceto `M`. São atalhos de desenvolvimento,
+marcados no código para remoção, e servem só para testar um efeito isolado sem ir atrás do pickup.
 
 ## O que ainda não existe
 
 Sem objetivo ou fim de fase, sem som, sem animação (o projétil usa três frames parados como
-rastro), sem dano ou morte, sem menu ou pausa, e nada persiste entre reinícios.
+rastro), sem menu ou pausa, sem tela de game over — a morte reinicia a room — e nada persiste entre
+reinícios.
 
 ## Detalhes técnicos
 
-Os subsistemas estão documentados em `docs/`: `movimento.md` (movimento e tiro), `input.md`,
-`estado.md`, `camera.md` e `vector2.md`.
+Os subsistemas estão documentados em `docs/`: `movimento.md` (movimento e tiro), `vida.md` (vida,
+tanques, dano e morte), `input.md`, `estado.md`, `camera.md` e `vector2.md`.
 
 O sistema de input parte do recurso do [gm48.net](https://gm48.net) (Mimpy, 2021), com desvios
 descritos em `docs/input.md`.
