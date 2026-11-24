@@ -59,6 +59,13 @@ drop não cria o item. Se ele caiu com a vida baixa e o player encheu antes de e
 ainda consome o item. `on_collect` chama `restore_health(10)` e devolve `true` sempre. O loot
 desaparece sozinho após 10 segundos se não for coletado.
 
+### Tanque por pickup
+
+`obj_power_up_health_tank` herda de `obj_power_up` e chama `grant_health_tank()` no
+`on_collect`: soma +100 ao máximo e +100 à vida atual, e o item é consumido. Diferente do loot,
+não tem `Alarm` e não entra no sorteio de drops — é item de sala, pego uma vez e perdido no
+reinício da room.
+
 ### Dano por contato
 
 `obj_hazard` é a base sem sprite dos perigos de toque: o `on_touch(_player)` padrão devolve `false` e

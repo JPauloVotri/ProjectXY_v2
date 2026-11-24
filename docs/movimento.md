@@ -30,6 +30,7 @@ Este documento é a fonte de verdade do sistema. Os comentários `///` no códig
 | `obj_power_up_frictionless` | herda do marcador; anula a fricção pelo método do jogador |
 | `obj_power_up_high_jump` | herda do marcador; multiplica o impulso do pulo pelo método do jogador |
 | `obj_power_up_double_jump` | herda do marcador; libera um pulo extra no ar pelo método do jogador |
+| `obj_power_up_health_tank` | herda do marcador; concede um tanque de vida pelo método do jogador |
 
 ### Estado
 
@@ -116,6 +117,7 @@ on_collect = function(_player) {
 | `grant_frictionless()` | método do player que liga `ignores_friction` |
 | `grant_high_jump()` | método do player que liga `high_jump` |
 | `grant_double_jump()` | método do player que liga `double_jump` e libera o pulo aéreo atual |
+| `grant_health_tank()` | método do player que soma +100 ao máximo e +100 à vida atual |
 
 Cada efeito novo ganha um `grant_*` próprio no player, em vez de o pickup escrever a flag direto: um nome errado estoura na hora, em vez de criar uma variável nova em silêncio.
 
