@@ -2,7 +2,7 @@
   "$GMProject":"v1",
   "%Name":"ProjectXY",
   "AudioGroups":[
-    {"$GMAudioGroup":"v1","%Name":"audiogroup_default","exportDir":"","name":"audiogroup_default","resourceType":"GMAudioGroup","resourceVersion":"2.0","targets":-1,},
+    {"$GMAudioGroup":"","%Name":"audiogroup_default","name":"audiogroup_default","resourceType":"GMAudioGroup","resourceVersion":"2.0","targets":-1,},
   ],
   "configs":{
     "children":[],
@@ -84,6 +84,7 @@
     {"id":{"name":"spr_crawler","path":"sprites/spr_crawler/spr_crawler.yy",},},
     {"id":{"name":"spr_explosion_bullet","path":"sprites/spr_explosion_bullet/spr_explosion_bullet.yy",},},
     {"id":{"name":"spr_explosion_enemy","path":"sprites/spr_explosion_enemy/spr_explosion_enemy.yy",},},
+    {"id":{"name":"spr_explosion_player","path":"sprites/spr_explosion_player/spr_explosion_player.yy",},},
     {"id":{"name":"spr_loot_health","path":"sprites/spr_loot_health/spr_loot_health.yy",},},
     {"id":{"name":"spr_muzzle_flash","path":"sprites/spr_muzzle_flash/spr_muzzle_flash.yy",},},
     {"id":{"name":"spr_player_legs_idle","path":"sprites/spr_player_legs_idle/spr_player_legs_idle.yy",},},
@@ -95,6 +96,7 @@
     {"id":{"name":"spr_power_up_high_jump","path":"sprites/spr_power_up_high_jump/spr_power_up_high_jump.yy",},},
     {"id":{"name":"spr_solid_slope","path":"sprites/spr_solid_slope/spr_solid_slope.yy",},},
     {"id":{"name":"spr_solid","path":"sprites/spr_solid/spr_solid.yy",},},
+    {"id":{"name":"spr_spark","path":"sprites/spr_spark/spr_spark.yy",},},
     {"id":{"name":"spr_water","path":"sprites/spr_water/spr_water.yy",},},
   ],
   "resourceType":"GMProject",

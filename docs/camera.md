@@ -22,7 +22,9 @@ pixel art. É a técnica de **view surface + recorte fracionado**.
    com a câmera em pixel inteiro.
 3. No **Draw GUI Begin**, `draw_surface_part(view_surf, frac(x), frac(y), 320, 180, 0, 0)`
    recorta uma janela de 320×180 a partir da fração.
-4. Ainda no **Draw GUI Begin**, `draw_health_hud` desenha o HUD por cima do recorte.
+4. Ainda no **Draw GUI Begin**, `draw_health_hud` desenha o HUD por cima do recorte. Durante a morte
+   o HUD não entra: a câmera pinta a GUI de preto e chama `draw_death_overlay(x, y)`, que desenha o
+   player de volta em coordenadas `mundo - câmera`.
 5. A GUI de 320×180 é escalada para a janela a 4× ou 6×, com filtragem desligada.
 
 O passo 5 é o que produz a suavidade: o recorte é resolvido em espaço de 320, mas rasterizado no

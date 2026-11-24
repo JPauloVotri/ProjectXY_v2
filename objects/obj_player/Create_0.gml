@@ -44,14 +44,17 @@ event_inherited();
     max_health = BASE_MAX_HEALTH;
     tanks = 0;
 
-    /// @desc Desconta vida, sem deixar o valor abaixo de zero.
+    /// @desc Desconta vida, sem deixar o valor abaixo de zero; zerar a vida mata.
     /// @param {Real} _amount Dano a descontar.
     /// @return {Bool} `true` quando a vida desceu.
     take_damage = function(_amount) {
         if (_amount <= 0) return false;
+        if (is_dead()) return false;
         if (current_health <= 0) return false;
 
         current_health = max(current_health - _amount, 0);
+
+        if (current_health <= 0) die();
 
         return true;
     }
@@ -107,9 +110,12 @@ event_inherited();
     /// @param {Real} _invincible_frames Frames de invencibilidade concedidos pela fonte.
     /// @return {Bool} `true` quando o toque valeu.
     hurt_from = function(_source_x, _damage, _invincible_frames) {
+        if (is_dead()) return false;
         if (is_invincible()) return false;
 
         take_damage(_damage);
+
+        if (is_dead()) return true;
 
         var _dir = sign(x - _source_x);
 
@@ -124,6 +130,157 @@ event_inherited();
         state_machine.change_state("hurt");
 
         return true;
+    }
+#endregion
+
+#region Morte
+    DEATH_FREEZE_FRAMES = game_get_speed(gamespeed_fps);
+    DEATH_SPARK_FRAMES = game_get_speed(gamespeed_fps);
+    DEATH_FLASH_INTERVAL = 3;
+    DEATH_SPARK_INTERVAL = 1;
+    DEATH_SPARK_LIFE = 2;
+    DEATH_EXPLOSION_FRAME_HOLD = 4;
+
+    death_sparks = [];
+    death_spark_timer = 0;
+    death_explosion_frames = 0;
+
+    /// @desc Verdadeiro do instante da morte até o reinício da room.
+    /// @return {Bool}
+    is_dead = function() {
+        return state_machine.is_state("dead");
+    }
+
+    /// @desc Zera a vida, trava o corpo e começa a sequência de morte.
+    die = function() {
+        if (is_dead()) return;
+
+        current_health = 0;
+        velocity.set(0, 0);
+        velocity_remainder.set(0, 0);
+        invincible_time = 0;
+        muzzle_flash_time = 0;
+        state_machine.change_state("dead");
+    }
+
+    /// @desc Prepara a sequência ao entrar no estado de morte.
+    on_dead_create = function() {
+        var _frame_count = sprite_get_number(spr_explosion_player);
+
+        death_sparks = [];
+        death_spark_timer = 0;
+        death_explosion_frames = _frame_count * DEATH_EXPLOSION_FRAME_HOLD;
+    }
+
+    /// @desc Avança as faíscas e, ao fim das três fases, encerra a morte.
+    on_dead_update = function() {
+        var _explode_time = DEATH_FREEZE_FRAMES + DEATH_SPARK_FRAMES;
+
+        if (state_machine.time < DEATH_FREEZE_FRAMES) return;
+
+        if (state_machine.time < _explode_time) {
+            update_death_sparks();
+
+            return;
+        }
+
+        if (state_machine.time < _explode_time + death_explosion_frames) return;
+
+        on_death_end();
+    }
+
+    // TODO: Trocar o reinício por uma tela de game over.
+    /// @desc Fecha a sequência de morte.
+    on_death_end = function() {
+        room_restart();
+    }
+
+    /// @desc Envelhece as faíscas e cria uma nova no corpo quando chega a hora.
+    update_death_sparks = function() {
+        var _len = array_length(death_sparks);
+
+        for (var _i = _len - 1; _i >= 0; _i--) {
+            var _spark = death_sparks[_i];
+
+            _spark.life -= 1;
+
+            if (_spark.life <= 0) array_delete(death_sparks, _i, 1);
+        }
+
+        death_spark_timer--;
+
+        if (death_spark_timer > 0) return;
+
+        death_spark_timer = DEATH_SPARK_INTERVAL;
+
+        array_push(death_sparks, {
+            dx: irandom_range(-6, 6),
+            dy: irandom_range(-6, 6),
+            xscale: choose(-1, 1),
+            yscale: choose(-1, 1),
+            angle: choose(0, 90, 180, 270),
+            life: DEATH_SPARK_LIFE
+        });
+    }
+
+    /// @desc Verdadeiro nos frames em que o corpo pisca branco na morte.
+    /// @return {Bool}
+    is_death_flashing = function() {
+        var _elapsed = state_machine.time - DEATH_FREEZE_FRAMES;
+
+        return (_elapsed div DEATH_FLASH_INTERVAL) % 2 == 0;
+    }
+
+    /// @desc Desenha faíscas, corpo piscando ou explosão, já em coordenadas de tela.
+    /// @param {Real} _camera_x X da câmera, descontado para levar o mundo à GUI.
+    /// @param {Real} _camera_y Y da câmera, descontado para levar o mundo à GUI.
+    draw_death_overlay = function(_camera_x, _camera_y) {
+        var _px = x - _camera_x;
+        var _py = y - _camera_y;
+        var _explode_time = DEATH_FREEZE_FRAMES + DEATH_SPARK_FRAMES;
+
+        if (state_machine.time >= _explode_time) {
+            draw_death_explosion(_px, _py);
+
+            return;
+        }
+
+        draw_body(_px, _py, state_machine.time >= DEATH_FREEZE_FRAMES && is_death_flashing());
+        draw_death_sparks(_px, _py);
+    }
+
+    /// @desc Desenha o quadro da explosão correspondente ao tempo de morte.
+    /// @param {Real} _px X do corpo em coordenadas de tela.
+    /// @param {Real} _py Y do corpo em coordenadas de tela.
+    draw_death_explosion = function(_px, _py) {
+        var _elapsed = state_machine.time - DEATH_FREEZE_FRAMES - DEATH_SPARK_FRAMES;
+        var _last = sprite_get_number(spr_explosion_player) - 1;
+        var _frame = min(_elapsed div DEATH_EXPLOSION_FRAME_HOLD, _last);
+
+        draw_sprite_ext(spr_explosion_player, _frame, _px, _py, 1, 1, 0, c_white, 1);
+    }
+
+    /// @desc Desenha as faíscas vivas em torno do corpo.
+    /// @param {Real} _px X do corpo em coordenadas de tela.
+    /// @param {Real} _py Y do corpo em coordenadas de tela.
+    draw_death_sparks = function(_px, _py) {
+        var _len = array_length(death_sparks);
+
+        for (var _i = 0; _i < _len; _i++) {
+            var _spark = death_sparks[_i];
+
+            draw_sprite_ext(
+                spr_spark,
+                0,
+                _px + _spark.dx,
+                _py + _spark.dy,
+                _spark.xscale,
+                _spark.yscale,
+                _spark.angle,
+                c_white,
+                1
+            );
+        }
     }
 #endregion
 
@@ -424,6 +581,29 @@ event_inherited();
         return TORSO_DIAGONAL_DOWN;
     }
 
+    /// @desc Desenha pernas e torso na posição informada, todo branco quando pedido.
+    /// @param {Real} _px X do corpo no espaço de desenho.
+    /// @param {Real} _py Y do corpo no espaço de desenho.
+    /// @param {Bool} _white Se o corpo sai todo branco.
+    draw_body = function(_px, _py, _white) {
+        if (_white) gpu_set_fog(true, c_white, 0, 0);
+
+        draw_sprite_ext(legs_sprite, legs_frame, _px, _py, image_xscale, 1, 0, c_white, 1);
+        draw_sprite_ext(
+            spr_player_torso,
+            torso_frame,
+            _px,
+            _py + torso_offset_y,
+            image_xscale,
+            1,
+            0,
+            c_white,
+            1
+        );
+
+        gpu_set_fog(false, c_white, 0, 0);
+    }
+
     /// @desc Avança a caminhada pela distância percorrida e atualiza o torso pela mira.
     update_appearance = function() {
         if (state_machine.is_state("walk")) {
@@ -450,7 +630,8 @@ event_inherited();
         .add_state(new State("walk").set_create(on_walk_create).set_update(on_walk_update))
         .add_state(new State("jump").set_create(on_jump_create).set_update(on_jump_update))
         .add_state(new State("fall").set_create(on_fall_create).set_update(on_fall_update))
-        .add_state(new State("hurt").set_create(on_hurt_create).set_update(on_hurt_update));
+        .add_state(new State("hurt").set_create(on_hurt_create).set_update(on_hurt_update))
+        .add_state(new State("dead").set_create(on_dead_create).set_update(on_dead_update));
 #endregion
 
 #region Hooks

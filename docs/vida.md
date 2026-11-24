@@ -14,8 +14,8 @@ autocomplete e a validação de tipos do Feather.
 - **O total de tanques é dinâmico.** `tanks` cresce a cada tanque e é o denominador do HUD; não há
   limite fixo de 15.
 - **A vida fica entre 0 e o máximo.** Dano tem piso em 0; cura tem teto em `max_health`.
-- **Sem morte nesta versão.** Zerar a vida só leva o número a 0; o contato desconta vida, mas não
-  existe estado de morte.
+- **Zerar a vida mata.** `take_damage` chama `die()` no 0; a sequência de morte reinicia a room com
+  a vida base e nenhum tanque.
 
 ## Referência
 
@@ -33,10 +33,12 @@ autocomplete e a validação de tipos do Feather.
 
 | Método | Retorna | Descrição |
 |---|---|---|
-| `take_damage(_amount)` | `Bool` | desconta vida com piso em 0; `false` quando não desceu |
+| `take_damage(_amount)` | `Bool` | desconta vida e mata no 0; `false` quando não desceu |
 | `restore_health(_amount)` | `Bool` | recupera vida até `max_health`; `false` quando não subiu |
 | `grant_health_tank()` | `Bool` | soma +100 ao máximo e +100 à vida atual, até o novo máximo |
 | `get_full_tank_count()` | `Real` | `clamp(floor(current_health / HEALTH_PER_TANK), 0, tanks)` |
+| `die()` | — | zera a vida e entra no estado `dead`; não faz nada se já morreu |
+| `is_dead()` | `Bool` | verdadeiro do instante da morte até o reinício da room |
 
 ### HUD
 
@@ -47,7 +49,8 @@ autocomplete e a validação de tipos do Feather.
 - `tanks: <cheios>/<total>`: `get_full_tank_count()` e `tanks`, ambos com dois dígitos.
 
 A câmera chama o HUD no fim do Draw GUI Begin, depois de copiar a surface do mundo. Por ser GUI, o
-HUD não é tingido pela água e não sofre o recorte da câmera.
+HUD não é tingido pela água e não sofre o recorte da câmera. Durante a morte o HUD não é desenhado:
+a tela preta o substitui.
 
 ### Cura por loot
 
@@ -70,8 +73,8 @@ nada acontece; senão, `take_damage(_damage)` desconta a vida com piso em 0, a d
 estado `hurt`, que preserva o impulso e trava andar, pular e atirar por `HURT_LOCK_FRAMES`; ao fim,
 volta para `fall`.
 
-O retorno é `true` sempre que o toque vale, mesmo com a vida já em 0 e sem nada a descontar: o
-arremesso não depende de a vida ter descido.
+Se o toque zera a vida, `hurt_from` devolve `true` sem aplicar o recuo: a sequência de morte assume
+no lugar do estado `hurt`.
 
 A invencibilidade fica em `invincible_time`, decrementado no `Step`. `start_invincibility(_frames)`
 usa `max` para não encurtar um recuo em andamento. As fontes atuais concedem
@@ -89,6 +92,36 @@ usa `max` para não encurtar um recuo em andamento. As fontes atuais concedem
 
 O recuo escala pela água como o pulo: `physics_factor` vale `.5` dentro dela e `1` com
 `ignores_friction`. O dano não escala: são sempre os `TOUCH_DAMAGE` pontos da fonte.
+
+### Morte
+
+Zerar a vida chama `die()`: zera velocidade, resto, `invincible_time` e `muzzle_flash_time` e troca
+para o estado `dead`. Nesse instante o `Step` do player para de rodar o jogo — só
+`state_machine.update()` continua —, então o corpo fica congelado na pose em que estava e o resto do
+mundo segue simulando por baixo.
+
+A câmera desenha a morte no Draw GUI Begin: cobre a GUI de preto, chama `draw_death_overlay(x, y)` e
+pula o HUD. O overlay recebe a posição da câmera e redesenha o corpo em coordenadas de tela
+(`mundo - câmera`), por cima do preto.
+
+As fases usam `state_machine.time`:
+
+| Fase | Frames | O que aparece |
+|---|---:|---|
+| Preto | `DEATH_FREEZE_FRAMES` (60) | corpo normal, congelado |
+| Faíscas | `DEATH_SPARK_FRAMES` (60) | corpo piscando branco/normal e faíscas |
+| Explosão | 8 × `DEATH_EXPLOSION_FRAME_HOLD` (32) | explosão no lugar do corpo |
+
+As faíscas são dados do próprio player (`death_sparks`): uma nasce a cada `DEATH_SPARK_INTERVAL`
+frame, dentro de uma caixa de ±6 px do centro, com `xscale`/`yscale` em ±1, ângulo múltiplo de 90 e
+`DEATH_SPARK_LIFE` frames de vida. Só espelhamento e ângulos retos, porque outra rotação tiraria a
+faísca da grade de pixels.
+
+A piscada chama `gpu_set_fog(true, c_white, 0, 0)` em `draw_body`, a cada `DEATH_FLASH_INTERVAL`
+frames, começando no branco.
+
+`on_death_end()` fecha a sequência chamando `room_restart()`; a room volta com 99 de vida e nenhum
+tanque. É esse método que dará lugar à tela de game over no futuro.
 
 ### Exemplos
 
@@ -108,9 +141,10 @@ O recuo escala pela água como o pulo: `physics_factor` vale `.5` dentro dela e 
 | `K` | concede um tanque |
 | `L` | tira 1 HP por ativação com `check_stutter(30, 5)` |
 | `H` | devolve 1 HP por ativação com `check_stutter(30, 5)` |
+| `M` | chama `die()` na hora, com a vida que estiver |
 
-Os três são temporários, marcados no código com `// TODO: remover depois`, e não têm equivalente no
-controle.
+Os quatro são temporários, marcados no código com `// TODO: remover depois`, e não têm
+equivalente no controle.
 
 ## Armadilhas
 
@@ -121,11 +155,14 @@ controle.
 - **Cada 100 de vida conta como um tanque cheio.** Em 100 a linha de vida volta a 0 e o tanque
   aparece como cheio; em 99 o tanque deixa de contar.
 - **O HUD é GUI.** Desenhá-lo no Draw do mundo o deixaria sujeito à água e ao recorte da câmera.
-- **A vida 0 não mata.** Não há estado de morte; os atalhos de teste continuam funcionando.
+- **Zerar a vida mata na hora.** `take_damage` chama `die()` no mesmo frame do acerto; não existe
+  janela com 0 HP em que o player ainda aja.
+- **O toque que mata não arremessa.** `hurt_from` sai depois de `take_damage` quando o player morre;
+  o corpo fica parado onde encostou em vez de levar o recuo.
+- **A morte é desenhada fora do mundo.** O preto e o corpo vêm do Draw GUI Begin; desenhá-los no
+  mundo deixaria água, projéteis e o resto da camada por cima.
 - **O dano do toque é por fonte.** `hurt_from` desconta o `TOUCH_DAMAGE` de quem tocou; não existe
   um valor global de contato. A invencibilidade decide se o toque vale, não quanto ele tira.
-- **Vida em 0 não impede o arremesso.** `hurt_from` devolve `true` mesmo quando `take_damage` não
-  desce a vida; o player continua sendo jogado para longe até a morte existir.
 - **O travamento é do recuo, não da invencibilidade.** O controle volta em `HURT_LOCK_FRAMES`
   frames; a piscada dura os `TOUCH_INVINCIBLE_FRAMES` concedidos pela fonte.
 - **Loot que já caiu é consumido mesmo com a vida cheia.** O filtro de drop impede criar o item

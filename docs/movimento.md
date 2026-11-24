@@ -156,8 +156,8 @@ A sprite `spr_loot_health` tem 4 frames: `0, 1, 2, 1`. O quarto frame é uma có
 loop nativo produz `0, 1, 2, 1, 0, 1...`. O ping-pong do editor de sprite é só preview e não
 altera o runtime.
 
-Para testar sem morte, chame `loot_spawn(x, y, obj_loot_health)`; ele ignora o filtro. Para testar
-o filtro, use `loot_drop(x, y, 1)` com a vida cheia e depois ferida.
+Para testar sem passar pelo filtro, chame `loot_spawn(x, y, obj_loot_health)`; ele ignora o filtro.
+Para testar o filtro, use `loot_drop(x, y, 1)` com a vida cheia e depois ferida.
 
 ### Constantes (`obj_player`)
 
@@ -177,12 +177,18 @@ o filtro, use `loot_drop(x, y, 1)` com a vida cheia e depois ferida.
 | `HURT_PUSH_SPEED` | `.7` | impulso horizontal do recuo, em px por frame |
 | `HURT_LOCK_FRAMES` | `20` | frames de controle travado no estado `hurt` |
 | `BLINK_INTERVAL` | `3` | frames acesos/apagados na piscada da invencibilidade |
+| `DEATH_FREEZE_FRAMES` | `60` | frames de tela preta com o corpo congelado |
+| `DEATH_SPARK_FRAMES` | `60` | frames de faíscas e piscada branca |
+| `DEATH_FLASH_INTERVAL` | `3` | frames de cada troca entre branco e normal na morte |
+| `DEATH_SPARK_INTERVAL` | `1` | frames entre duas faíscas novas |
+| `DEATH_SPARK_LIFE` | `2` | frames que cada faísca fica visível |
+| `DEATH_EXPLOSION_FRAME_HOLD` | `4` | frames que cada quadro da explosão fica na tela |
 
 Com esses valores e o pulo alto desligado, o pulo sobe **37px** — a fórmula contínua `JUMP_SPEED² / (2 * GRAVITY)` dá 36, e o passo discreto a 60 fps rende um pouco mais. O ápice chega em 31 frames e o tempo de ar é 60.
 
 ### Estados (`obj_player`)
 
-O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()` e procura `obj_hazard` e `obj_enemy` na posição final, chamando `on_touch(self)` em cada um. Depois acumula a distância horizontal da caminhada, tenta disparar e chama `update_appearance()`. `invincible_time` desce um por frame no começo do `Step`. A regra horizontal, o impulso do pulo, o corte e o recuo moram nos estados.
+O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade terminal, chama `state_machine.update()`, zera `air_jump_used` e a velocidade vertical positiva quando o player está no chão, chama `move()` e procura `obj_hazard` e `obj_enemy` na posição final, chamando `on_touch(self)` em cada um. Depois acumula a distância horizontal da caminhada, tenta disparar e chama `update_appearance()`. `invincible_time` desce um por frame no começo do `Step`. A regra horizontal, o impulso do pulo, o corte e o recuo moram nos estados. Com o player morto, o `Step` roda só `state_machine.update()` e retorna; depois dos dois `on_touch` há outro retorno, para um toque que mata não chegar ao disparo nem à animação.
 
 | Estado | Entra quando | Comportamento | Sai para |
 |---|---|---|---|
@@ -191,6 +197,7 @@ O `Step` coleta o input de movimento e de mira, aplica gravidade e velocidade te
 | `jump` | impulso do pulo | controle aéreo + corte | `fall` quando `velocity.y >= 0` |
 | `fall` | no ar, descendo | controle aéreo | `idle`/`walk` ao pousar, `jump` com buffer ou pulo aéreo |
 | `hurt` | toque num perigo ou inimigo | preserva o impulso; sem regra horizontal, pulo ou tiro | `fall` após `HURT_LOCK_FRAMES` |
+| `dead` | vida em 0 | corpo congelado; sem regra, pulo, tiro ou animação | — (a sequência reinicia a room) |
 
 | Auxiliar | Papel |
 |---|---|
@@ -226,6 +233,17 @@ ele for maior que zero. `start_invincibility(_frames)` usa `max` para não encur
 andamento, então uma fonte de dano contínuo pode conceder poucos frames sem derrubar a
 invencibilidade longa de um recuo. O recuo escala pela água por `physics_factor`, como o pulo; o
 dano não escala e a vida vem de `docs/vida.md`.
+
+### Morte
+
+`die()` é chamado por `take_damage` ao zerar a vida: zera velocidade, resto, `invincible_time` e
+`muzzle_flash_time` e troca para `dead`. O estado não aplica regra nenhuma; quem avança a sequência é
+`on_dead_update`, com as fases de `state_machine.time` descritas em `docs/vida.md`.
+
+O corpo continua sendo desenhado pelo player, mas fora do mundo: a câmera cobre a GUI de preto e
+chama `draw_death_overlay(x, y)`, que redesenha pernas e torso em coordenadas de tela
+(`mundo - câmera`) e por cima deles as faíscas ou a explosão. Por isso o `Draw` do player retorna
+cedo quando `is_dead()`. Ao fim da explosão, `on_death_end()` reinicia a room.
 
 ### Animação (`obj_player`)
 
@@ -426,6 +444,8 @@ A última condição é o que distingue rampa de plataforma: na rampa o terreno 
 - **Pulo e queda reusam quadros da caminhada.** Os índices 3, 4 e 6 precisam acompanhar a arte.
 - **A pose de entrada fica no `create` do estado.** O `update` do estado novo não roda no frame da troca; o que precisa valer na hora vai no `create`, e o que muda por frame vai em `update_appearance()`.
 - **O dano do toque vem da fonte.** `hurt_from` desconta o `TOUCH_DAMAGE` de quem tocou; não há um valor global de contato no player. `take_damage` sozinho não arremessa.
+- **O toque que mata não arremessa.** `hurt_from` sai logo depois de `take_damage` quando a vida chega a 0; o corpo fica congelado onde estava, sem impulso e sem entrar em `hurt`.
+- **O estado `dead` não passa pelo `Step` inteiro.** O player só roda `state_machine.update()` até o reinício da room; por isso não há gravidade, input, contato nem animação na morte.
 - **O travamento do recuo é mais curto que a invencibilidade.** O controle volta em `HURT_LOCK_FRAMES`; a piscada e o bloqueio de novos toques duram os frames concedidos pela fonte.
 - **A inversão do sprite depende da origem.** `spr_player` usa origem `(3, 8)`, então `image_xscale = -1` mantém o bbox em `[-3, 2]` e a colisão não desloca. Trocar a origem para um canto faria a máscara espelhada mudar de lado e o personagem encostar na parede em apenas uma das direções.
 - **O espaçamento da escada é o que exige o power-up.** Na água, a escada da direita sobe 24px e depois 32px, contra 18px de pulo base e 25px do duplo base; o pulo alto sozinho (34px) passa, e com o duplo chega a 47px. Mexer em `JUMP_SPEED`, em `HIGH_JUMP_FACTOR`, em `DOUBLE_JUMP_FACTOR`, em `WATER_FACTOR` ou no espaçamento das plataformas muda essa conta.

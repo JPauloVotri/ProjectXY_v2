@@ -1,3 +1,9 @@
+if (is_dead()) {
+    state_machine.update();
+
+    return;
+}
+
 input_x = obj_game.right.check() - obj_game.left.check();
 
 if (input_x != 0) set_facing(input_x);
@@ -65,6 +71,13 @@ if (obj_game.debug_heal.check_stutter(30, 5) && restore_health(1)) {
     );
 }
 
+// TODO: remover depois — junto com a entrada `debug_death` do obj_game.
+if (obj_game.debug_death.check_pressed()) {
+    die();
+
+    return;
+}
+
 in_water = place_meeting(x, y, obj_water);
 physics_factor = (in_water && !ignores_friction) ? WATER_FACTOR : 1;
 
@@ -99,6 +112,8 @@ if (_hazard != noone) _hazard.on_touch(self);
 var _enemy = instance_place(x, y, obj_enemy);
 
 if (_enemy != noone) _enemy.on_touch(self);
+
+if (is_dead()) return;
 
 if (state_machine.is_state("walk")) {
     walk_distance += abs(x - _previous_x);

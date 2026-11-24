@@ -73,4 +73,8 @@
     // TODO: remover depois — entrada de teste de cura em stutter.
     debug_heal = input_manager.create_input()
         .add_keyboard_key(ord("H"));
+
+    // TODO: remover depois — entrada de teste da morte.
+    debug_death = input_manager.create_input()
+        .add_keyboard_key(ord("M"));
 #endregion
