@@ -13,6 +13,8 @@ pixel art. É a técnica de **view surface + recorte fracionado**.
   reaproveitadas para guardar a posição contínua da câmera.
 - **A GUI fixa a resolução do jogo.** `display_set_gui_size(320, 180)` e o GameMaker escala para
   a janela.
+- **Uma câmera por room.** A `obj_camera` não persiste: o Room Start do `obj_game` cria uma nova
+  quando a room não tem, então a view `+1` é reaplicada e a câmera assenta no player.
 
 ## Como a imagem chega à tela
 

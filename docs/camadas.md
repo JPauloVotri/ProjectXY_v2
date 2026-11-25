@@ -7,18 +7,19 @@ desenha da maior profundidade para a menor, então o menor valor fica na frente.
 
 | Camada | Depth | Conteúdo |
 |---|---:|---|
-| `Zones` | 0 | `obj_camera_zone`, `obj_camera_zone_secret`; invisíveis no runtime |
+| `Zones` | 0 | `obj_camera_zone`, `obj_camera_zone_secret`, `obj_door_zone`; invisíveis |
 | `Water` | 1000 | `obj_water`; overlay na frente de todo o mundo |
 | `Effects` | 2000 | `obj_explosion_bullet`, `obj_explosion_enemy` |
 | `Projectiles` | 3000 | `obj_bullet` |
 | `Actors` | 4000 | player, inimigos, pickups e power-ups |
 | `Terrain` | 5000 | `obj_solid`, `obj_solid_slope` |
 | `Background` | 9000 | cor de fundo da room |
-| `Systems` | 10000 | `obj_game`, `obj_camera`; sem desenho visível |
+| `Systems` | 10000 | `obj_game` persistente e `obj_camera` criada no Room Start; sem desenho |
 
 `Zones` fica à frente apenas para facilitar a edição; as instâncias desligam `visible` no Create.
 `Systems` continua visível de propósito: o `Draw GUI Begin` da câmera precisa rodar. Os objetos
-dessa camada não têm sprite.
+dessa camada não têm sprite. O `obj_game` é persistente e vive na `rm_room_1`; ele cria a
+`obj_camera` de cada room no Room Start, porque a câmera não persiste.
 
 ## Profundidades reservadas
 
@@ -40,8 +41,8 @@ e a profundidade da tabela e adicione a macro correspondente no `scr_draw`.
   tira a instância do padrão. Crie com `instance_create_layer` e a macro `LAYER_*`.
 - **Água é overlay.** `Water` fica na frente de atores, tiros e efeitos. A GUI não é tingida,
   porque o recorte da câmera acontece depois do render do mundo.
-- **Zonas são invisíveis.** `obj_camera_zone` liga `visible = false` no Create; a camada existe
-  para posicionar e depurar as áreas.
+- **Zonas são invisíveis.** `obj_camera_zone` e `obj_door_zone` ligam `visible = false` no Create; a
+  camada existe para posicionar e depurar as áreas.
 - **Sistemas não desenham o mundo.** `obj_game` e `obj_camera` não têm sprite; a câmera só desenha
   a GUI, com a surface do mundo e o HUD. A camada fica no fundo para não disputar espaço com o
   mundo.

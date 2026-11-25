@@ -127,8 +127,9 @@ faísca da grade de pixels.
 A piscada chama `gpu_set_fog(true, c_white, 0, 0)` em `draw_body`, a cada `DEATH_FLASH_INTERVAL`
 frames, começando no branco.
 
-`on_death_end()` fecha a sequência chamando `room_restart()`; a room volta com 99 de vida e nenhum
-tanque. É esse método que dará lugar à tela de game over no futuro.
+`on_death_end()` desliga `persistent` e chama `room_restart()`; a instância antiga morre na troca
+e a colocada na room nasce do zero, com 99 de vida e nenhum tanque. É esse método que dará lugar
+à tela de game over no futuro.
 
 ### Exemplos
 
@@ -175,3 +176,5 @@ equivalente no controle.
 - **Loot que já caiu é consumido mesmo com a vida cheia.** O filtro de drop impede criar o item
   com a vida cheia, mas `on_collect` devolve `true` e o item some se for tocado depois de a vida
   encher.
+- **A instância que morre não sobrevive ao reinício.** O player é persistente entre rooms; a morte
+  desliga a persistência para a room criar a instância colocada, que é o ponto de renascimento.

@@ -34,6 +34,7 @@ function MapTilePosition(_room_name, _local_x, _local_y, _global_x, _global_y) c
 function map_room_data() {
     return [
         new MapRoom(rm_room_1, 0, 0),
+        new MapRoom(rm_room_2, -1, -1),
     ];
 }
 

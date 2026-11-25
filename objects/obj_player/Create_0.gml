@@ -4,6 +4,13 @@ enum FACING {
     RIGHT = 1,
 }
 
+/// @desc O player atravessa rooms; a instância colocada na room marca o renascimento.
+if (instance_number(obj_player) > 1) {
+    instance_destroy();
+
+    exit;
+}
+
 event_inherited();
 
 #region Constantes
@@ -190,8 +197,9 @@ event_inherited();
     }
 
     // TODO: Trocar o reinício por uma tela de game over.
-    /// @desc Fecha a sequência de morte.
+    /// @desc Devolve o corpo à room: sem persistência, a instância colocada nasce limpa.
     on_death_end = function() {
+        persistent = false;
         room_restart();
     }
 
@@ -683,5 +691,68 @@ event_inherited();
 
         y++;
         return true;
+    }
+#endregion
+
+#region Travessia
+    /// @desc Room marcada por uma porta; `undefined` enquanto não há travessia pendente.
+    pending_room = undefined;
+
+    /// @desc Porta de chegada na room marcada; `-1` enquanto não há travessia pendente.
+    pending_door = -1;
+
+    /// @desc Marca a porta de destino e troca de room no fim do evento atual.
+    /// @param {Asset.GMRoom} _room_asset Room de destino.
+    /// @param {Real} _door_id Porta de chegada na room de destino.
+    travel_to = function(_room_asset, _door_id) {
+        pending_room = _room_asset;
+        pending_door = _door_id;
+
+        room_goto(_room_asset);
+    }
+
+    /// @desc Porta com o id informado na room atual.
+    /// @param {Real} _door_id Identificador da porta dentro da room.
+    /// @return {Id.Instance.obj_door_zone,noone} Porta encontrada, ou `noone`.
+    find_door = function(_door_id) {
+        var _count = instance_number(obj_door_zone);
+
+        for (var _i = 0; _i < _count; _i++) {
+            /// @type {Id.Instance.obj_door_zone}
+            var _door = instance_find(obj_door_zone, _i);
+
+            if (_door.door_id == _door_id) return _door;
+        }
+
+        return noone;
+    }
+
+    /// @desc Nasce na porta pendente, deslocado pelo offset de saída dela, e para o corpo.
+    apply_pending_travel = function() {
+        if (is_undefined(pending_room)) return;
+        if (pending_room != room) return;
+
+        /// @type {Id.Instance.obj_door_zone}
+        var _door = find_door(pending_door);
+
+        if (_door == noone) {
+            show_debug_message(
+                "[porta] porta " + string(pending_door) + " não existe em " +
+                room_get_name(room)
+            );
+
+            pending_room = undefined;
+            pending_door = -1;
+
+            return;
+        }
+
+        x = round((_door.bbox_left + _door.bbox_right) * .5 + _door.exit_x);
+        y = round((_door.bbox_top + _door.bbox_bottom) * .5 + _door.exit_y);
+        velocity.set(0, 0);
+        velocity_remainder.set(0, 0);
+
+        pending_room = undefined;
+        pending_door = -1;
     }
 #endregion
