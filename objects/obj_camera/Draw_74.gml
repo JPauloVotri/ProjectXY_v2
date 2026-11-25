@@ -15,4 +15,9 @@ if (_player != noone && _player.is_dead()) {
 
 if (_player != noone) {
     draw_health_hud(_player);
+
+    /// @type {Asset.GMRoom}
+    var _room_asset = room;
+
+    draw_map_debug(_room_asset, _player);
 }

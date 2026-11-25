@@ -34,3 +34,29 @@ function draw_health_hud(_player) {
     draw_text(4, 4, "health: " + string(_health));
     draw_text(4, 13, "tanks: " + _full_text + "/" + _total_text);
 }
+
+/// @desc Desenha o tile local e o global do player abaixo do HUD.
+/// @param {Asset.GMRoom} _room_asset Room atual.
+/// @param {Id.Instance.obj_player} _player Jogador seguido.
+function draw_map_debug(_room_asset, _player) {
+    var _tile = map_tile_position(_room_asset, _player.x, _player.y);
+
+    draw_set_font(fnt_debug);
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
+    draw_set_color(c_white);
+
+    if (is_undefined(_tile)) {
+        draw_text(4, 22, "mapa: sem posição");
+
+        return;
+    }
+
+    draw_text(
+        4,
+        22,
+        "mapa: " + _tile.room_name +
+        "  local " + string(_tile.local_x) + "," + string(_tile.local_y) +
+        "  global " + string(_tile.global_x) + "," + string(_tile.global_y)
+    );
+}
